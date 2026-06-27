@@ -1,0 +1,5 @@
+Auto-code logic updated:
+- Organization code and hospital code can be identical for a single-hospital/single-institute organization.
+- Example: Organization TEST + Hospital TEST => Hospital Code TEST, not TEST-02.
+- Hospital codes are checked for uniqueness only against other hospitals, not against organization codes.
+- Multi-hospital groups still get unique hospital suffixes when needed (TEST, TEST-02, TEST-PUNE, etc.).

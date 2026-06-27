@@ -1,0 +1,1 @@
+Fix: Default Hospital delete action now routes to Delete Demo Data / Default Hospital cleanup. Added visible cleanup card in Radpro Panel for sysadmin.

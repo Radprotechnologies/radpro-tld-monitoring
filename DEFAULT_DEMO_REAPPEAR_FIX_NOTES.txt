@@ -1,0 +1,13 @@
+Radpro TLD Monitoring - Default Demo Reappear Fix
+
+Fix added:
+- After Radpro Admin uses Delete Demo Data / Default Hospital, the app writes settings.demoDefaultDeleted=true.
+- On startup, the app now checks this flag and will NOT recreate Default Organization or Default Hospital / Institute.
+- Demo RSO (rso/rso123) is not recreated after default cleanup.
+- Radpro Admin remains active and is detached from the deleted demo tenant if no real tenant exists.
+
+Recommended production sequence:
+1. Create real organization/hospital.
+2. Create hospital RSO/Admin login.
+3. Use Delete Demo Data / Default Hospital.
+4. Hard refresh and confirm only real organizations/hospitals remain.

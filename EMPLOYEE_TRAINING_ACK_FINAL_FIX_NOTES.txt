@@ -1,0 +1,12 @@
+RadPro TLD Monitoring - Employee Portal / Training / Acknowledgement Final Policy Fix
+
+Fixes included:
+1. Employee portal never exposes uploaded quarterly TLD report PDFs.
+   Employees see mapped dose values and their own employee form attachments only.
+2. Training questionnaire is available only after RSO/Admin explicitly generates it.
+   Older employee-side auto-generated quizzes are ignored.
+3. RSO compliance matrix defaults to the latest imported dose quarter instead of the current calendar quarter.
+   This avoids confusion when imported historical report quarters are older than the current date.
+4. Employee dose acknowledgement no longer requires drawn signature.
+   E-sign captures logged-in user, signer name, quarter, date/time, IP address and acknowledgement statement.
+5. Existing Radpro Panel, auto-code generation, hospital/org access controls remain included.

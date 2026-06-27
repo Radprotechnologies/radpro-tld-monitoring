@@ -1,0 +1,12 @@
+RadPro Panel fix
+----------------
+This build fixes the Radpro Panel / Hospitals tab so Radpro Panel Admin can see and use:
+- Register Organization / Hospital Group
+- Add Hospital / Institute
+- Organization License, Trial & Billing Control
+- Trial start/end date, registration date, renewal due date
+- Package, license status, billing amount/cycle
+- Hospital and TLD user limits
+- Registered organizations/hospitals commercial status list
+
+The issue was caused by the tenancy tab content being replaced by a permission message for non-admin users and not being restored on subsequent Radpro Admin login in the same browser session.

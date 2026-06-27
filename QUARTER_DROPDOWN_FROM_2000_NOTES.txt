@@ -1,0 +1,12 @@
+Radpro TLD Monitoring - Quarter Dropdown From Year 2000
+
+Fix included:
+- Dose report quarter dropdown now starts from Q1 2000 and goes up to the current quarter.
+- All quarter selectors using data-quarter-select now include historical quarters.
+- RSO/Admin can upload old/historical TLD dose reports from year 2000 onward.
+- Existing imported quarters and attachment quarters are still included and sorted correctly.
+
+Example available options:
+Q2 2026, Q1 2026 ... Q4 2025 ... Q1 2000
+
+Deploy through GitHub + Render as usual.

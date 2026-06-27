@@ -1,0 +1,18 @@
+RadPro TLD Monitoring - No Default Demo Reseed Edition
+
+Fix:
+- Default Organization / Default Hospital / demo RSO are no longer created automatically on startup, login, restart or redeploy.
+- Demo data seeding is now disabled by default for production and demo deployments.
+- Demo seed can be enabled only intentionally with environment variable ENABLE_DEMO_SEED=true.
+- Radpro Admin (radpro / radpro123) remains auto-recovered and active.
+
+Use:
+1. Deploy this package.
+2. Login as radpro / radpro123.
+3. Click Delete Demo Data / Default Hospital once if any old Default Hospital still exists in the current database.
+4. Create your real organization and hospital.
+5. Do NOT set ENABLE_DEMO_SEED=true in Render for production/demo.
+
+Important for Render:
+- If using SQLite on Render Free without persistent disk, database may reset on restart.
+- This package still will not recreate the default hospital after reset because auto demo seed is off by default.

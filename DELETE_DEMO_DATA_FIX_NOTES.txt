@@ -1,0 +1,21 @@
+RadPro TLD Monitoring - Delete Demo Data / Default Hospital Edition
+
+Added for Radpro Panel Admin:
+- New button: Delete Demo Data / Default Hospital
+- Visible only to Radpro Panel Admin when default demo organization/hospital exists.
+- Safely removes:
+  - Default Organization
+  - Default Hospital / Institute
+  - Demo RSO user (rso)
+  - users linked to default demo tenant
+  - linked dose records, acknowledgements, awareness acknowledgements
+  - default tenant attachments and RSC records
+  - related training attempts and overexposure records
+- Keeps Radpro Panel Admin login active.
+- Real organizations/hospitals remain untouched.
+
+Recommended workflow:
+1. Create real organization/hospital.
+2. Create Hospital RSO login.
+3. Verify new RSO login works.
+4. Login as Radpro Admin and click Delete Demo Data / Default Hospital.

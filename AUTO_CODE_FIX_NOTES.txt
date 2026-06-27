@@ -1,0 +1,14 @@
+Radpro TLD Monitoring - Auto Code Edition
+
+Changes:
+- Organization code is generated automatically from Organization / Group Name.
+- Hospital / Institute code is generated automatically from Organization + Hospital/City.
+- Code fields are read-only in UI to avoid double/wrong manual entries.
+- Server also auto-generates unique codes if code is blank.
+- Duplicate codes are automatically suffixed with -02, -03, etc.
+- Existing edit/delete/activate/deactivate/license/billing/RSO login controls are retained.
+
+Examples:
+- RADPRO TECHNOLOGIES -> RADPRO
+- RADPRO TECHNOLOGIES + Pune hospital -> RADPRO-PUNE
+- Duplicate RADPRO-PUNE -> RADPRO-PUNE-02

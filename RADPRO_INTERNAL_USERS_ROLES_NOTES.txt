@@ -1,0 +1,20 @@
+Radpro internal user management edition
+
+Added Radpro Users & Roles tab for Radpro Panel Admin.
+Roles included:
+- Radpro Super Admin
+- Radpro Admin
+- Software Manager
+- Support Engineer
+- Sales Manager
+- Sales Executive
+- Accounts
+- Marketing
+- Viewer / Read Only
+
+Features:
+- Add/Edit/Enable/Disable/Delete Radpro internal users
+- Reset temporary password by entering a new password while editing
+- Require 2FA checkbox
+- Primary radpro login is protected from delete/disable
+- Radpro internal users are stored separately from customer hospital employees

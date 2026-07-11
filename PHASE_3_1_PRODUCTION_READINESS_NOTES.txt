@@ -1,0 +1,16 @@
+Radpro TLD Personal Monitoring Service — Phase 3.1 Production Readiness
+
+Included:
+- Duplicate organization prevention using normalized name and code.
+- Duplicate hospital prevention within the same organization.
+- Safe Radpro Admin duplicate merge action for existing Demo Hospital and TEST duplicates.
+- Merge reassigns linked users, departments, documents, training attempts, awareness acknowledgements, overexposure and RSC records before deleting duplicates.
+- Organization/hospital edit, activate/deactivate and delete retained.
+- Expanded delete dependency checks across production data tables.
+- Organization/hospital search and client-side pagination (5 organizations per page).
+- Audit entry for duplicate merge and existing CRUD/status actions.
+
+Safety:
+- Take a backup before using Merge Duplicate Demo/TEST Records.
+- The oldest matching organization/hospital is retained.
+- Linked records are reassigned before duplicate records are removed.

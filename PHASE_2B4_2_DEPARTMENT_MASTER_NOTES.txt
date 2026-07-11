@@ -1,0 +1,14 @@
+Radpro TLD Personal Monitoring Service
+Phase 2B.4.2 — Hospital Department Master
+
+Added:
+- Hospital-scoped Department Master under Settings, available to hospital RSO/Admin.
+- Add, activate/deactivate, refresh and delete department controls.
+- Duplicate department prevention per hospital.
+- Department deletion blocked when assigned to employees; deactivate instead.
+- Employee Department field changed from free-text to dropdown.
+- Dropdown reloads according to selected hospital and retains legacy department values while editing.
+- PostgreSQL departments table, created idempotently.
+- Audit logging for department create/update/delete.
+
+Existing UI, PostgreSQL runtime, role routing, organization/hospital save and all TLD modules retained.

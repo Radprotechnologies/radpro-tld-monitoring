@@ -1,0 +1,10 @@
+RADPRO TLD MONITORING — PHASE 3.2 POSTGRESQL-ONLY CLEANUP
+
+1. Removed runtime SQLite fallback and node:sqlite imports.
+2. DATABASE_URL is mandatory; startup fails fast when absent.
+3. Removed DB_FILE and SQLite database status from health/startup output.
+4. Removed SQLite migration/schema comparison utilities from production package.
+5. Docker, Render, Compose, .env and Windows launchers now configure PostgreSQL only.
+6. /app/data is used only for uploads/generated files.
+7. Added npm run pg:health for direct PostgreSQL connectivity verification.
+8. Existing Phase 3.1 duplicate prevention and organization/hospital management are retained.

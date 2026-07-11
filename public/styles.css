@@ -1,0 +1,83 @@
+:root { color-scheme: dark; }
+body {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(16,185,129,.20), transparent 28rem),
+    radial-gradient(circle at 90% 10%, rgba(14,165,233,.14), transparent 30rem),
+    linear-gradient(135deg, #020617 0%, #0f172a 45%, #111827 100%);
+}
+.glass-card {
+  background: rgba(2, 6, 23, 0.78);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  box-shadow: 0 18px 44px rgba(0,0,0,.28);
+  backdrop-filter: blur(16px);
+}
+.soft-card { background: rgba(15, 23, 42, .72); border: 1px solid rgba(148, 163, 184, .12); }
+.input-field { width: 100%; border-radius: .75rem; background: rgba(15,23,42,.92); border: 1px solid rgb(51 65 85); padding: .55rem .75rem; font-size: .75rem; outline: none; }
+.input-field:focus { border-color: rgb(52 211 153); box-shadow: 0 0 0 2px rgba(52,211,153,.16); }
+.btn-primary { border-radius: .75rem; background: rgb(52 211 153); color: #020617; font-weight: 700; font-size: .75rem; padding: .55rem .9rem; }
+.btn-primary:hover { background: rgb(110 231 183); }
+.btn-secondary { border-radius: .75rem; border: 1px solid rgb(51 65 85); font-size: .75rem; padding: .55rem .9rem; }
+.btn-secondary:hover { background: rgba(15,23,42,.96); }
+.btn-danger { border-radius: .75rem; border: 1px solid rgba(248,113,113,.5); color: rgb(252 165 165); font-size: .75rem; padding: .45rem .75rem; }
+.btn-danger:hover { background: rgba(127,29,29,.35); }
+.admin-tab.tab-active { background: rgba(52, 211, 153, .14); border-color: rgba(52, 211, 153, .65); color: rgb(167 243 208); }
+.status-pill { display:inline-flex; align-items:center; border-radius: 999px; padding: .15rem .5rem; font-size: 10px; border: 1px solid rgba(148,163,184,.22); }
+.thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgba(100,116,139,.55); border-radius: 999px; }
+.table-cell { padding: .5rem; border-bottom: 1px solid rgba(30,41,59,.9); vertical-align: top; }
+@media print {
+  body { background: white !important; color: black !important; }
+  header, footer, .no-print, #loginView, #adminView { display: none !important; }
+  #employeeView { display: block !important; }
+  .glass-card, .soft-card { background: white !important; color: black !important; border-color: #999 !important; box-shadow: none !important; }
+  table { color: black !important; }
+}
+.signature-canvas {
+  background: rgba(248, 250, 252, 0.98);
+  border: 1px dashed rgba(148, 163, 184, 0.75);
+  border-radius: .75rem;
+  touch-action: none;
+  cursor: crosshair;
+}
+button:disabled { opacity: .55; cursor: not-allowed; }
+.danger-btn { border-radius: .75rem; border: 1px solid rgba(248,113,113,.55); color: rgb(252 165 165); font-size: .75rem; padding: .55rem .9rem; }
+.danger-btn:hover { background: rgba(127,29,29,.22); }
+
+/* Phase 2B.4.3: keep Dose Trend panel compact and prevent Chart.js canvas stretching */
+.dose-trend-chart-wrap {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  min-height: 250px;
+  max-height: 250px;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, .48);
+  border: 1px solid rgba(148, 163, 184, .12);
+}
+.dose-trend-chart-wrap canvas {
+  display: block !important;
+  width: 100% !important;
+  height: 250px !important;
+  max-height: 250px !important;
+}
+.dose-trend-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  color: rgb(148 163 184);
+  font-size: .8rem;
+  text-align: center;
+}
+.dose-trend-empty.hidden { display: none; }
+@media (max-width: 767px) {
+  .dose-trend-chart-wrap,
+  .dose-trend-chart-wrap canvas {
+    height: 220px !important;
+    min-height: 220px;
+    max-height: 220px !important;
+  }
+}

@@ -1,0 +1,10 @@
+Radpro TLD Personal Monitoring Service
+Phase 2B.4.4 — Employee Radiation Safety Committee Member List
+
+Changes:
+- Added a read-only Radiation Safety Committee Member List to the individual employee portal.
+- Employees see current active committee members for their own hospital/institute.
+- The list shows name, committee role, designation, department, email and phone.
+- Employee users cannot edit or delete committee records.
+- RSO/Admin committee management remains unchanged.
+- Added a tenant-scoped read-only API endpoint: GET /api/rsc/member-list.

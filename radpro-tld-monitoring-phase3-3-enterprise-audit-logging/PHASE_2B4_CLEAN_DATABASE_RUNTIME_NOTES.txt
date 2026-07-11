@@ -1,0 +1,45 @@
+Radpro TLD Personal Monitoring Service
+Phase 2B.4 — Clean PostgreSQL Runtime Bridge
+
+Purpose
+- Preserve the approved Phase 2B.2 UI, routing and all modules.
+- Remove the unstable one-new-PostgreSQL-connection-per-query behavior.
+- Keep SQLite fallback strictly for DB_DRIVER=sqlite.
+
+Technical changes
+1. PostgreSQL mode now starts one local bridge daemon with a persistent pg connection pool.
+2. Existing synchronous route code communicates with that daemon locally, avoiding a new Supabase TLS/database connection for every query.
+3. PostgreSQL startup and API errors now provide clear timeout/connection messages.
+4. Startup logging now reports PostgreSQL host/port/database in PostgreSQL mode instead of displaying the SQLite file path.
+5. SQLite remains isolated to DB_DRIVER=sqlite.
+6. No UI, role routing, workflow or module redesign was made.
+
+Required Render environment
+DB_DRIVER=postgres
+DATABASE_URL=<Supabase Session Pooler connection string, normally port 5432>
+PGSSLMODE=no-verify
+NODE_ENV=production
+PORT=3000
+DATA_DIR=/app/data
+UPLOAD_DIR=/app/data/uploads
+COOKIE_SECURE=true
+SESSION_SECRET=<long random secret>
+MAX_UPLOAD_MB=25
+ENABLE_DEMO_SEED=false
+
+Recommended optional PostgreSQL settings
+PG_POOL_MAX=5
+PG_CONNECT_TIMEOUT_MS=15000
+PG_QUERY_TIMEOUT_MS=30000
+PG_BRIDGE_CLIENT_TIMEOUT_MS=35000
+PG_BRIDGE_SPAWN_TIMEOUT_MS=40000
+
+Deployment validation
+1. Render logs must show: Radpro TLD database driver: postgres
+2. Render logs must show: Database: PostgreSQL (...pooler.supabase.com:5432/postgres)
+3. Login with radpro / radpro123.
+4. Create organization TEST.
+5. Verify immediate list/dropdown reload.
+6. Logout/login and verify persistence.
+7. Verify Supabase organizations row.
+8. Add hospital and verify persistence after relogin.

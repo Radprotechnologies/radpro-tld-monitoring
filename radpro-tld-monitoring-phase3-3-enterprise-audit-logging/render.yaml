@@ -1,0 +1,56 @@
+services:
+  - type: web
+    name: radpro-tld-monitoring
+    env: docker
+    plan: starter
+    disk:
+      name: radpro-tld-data
+      mountPath: /app/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: DATA_DIR
+        value: /app/data
+      - key: DB_FILE
+        value: /app/data/radpro_tld.db
+      - key: UPLOAD_DIR
+        value: /app/data/uploads
+      - key: MAX_UPLOAD_MB
+        value: 25
+      - key: COOKIE_SECURE
+        value: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://radpro-tld-monitoring.onrender.com
+      - key: TWO_FACTOR_REQUIRED
+        value: false
+      - key: AUTO_REMINDERS_ENABLED
+        value: false
+      - key: REMINDER_INTERVAL_HOURS
+        value: 24
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_TOKEN
+        sync: false
+      - key: WHATSAPP_API_URL
+        sync: false
+      - key: BACKUP_KDF_ITERATIONS
+        value: 150000
+      - key: ENABLE_DEMO_SEED
+        value: false

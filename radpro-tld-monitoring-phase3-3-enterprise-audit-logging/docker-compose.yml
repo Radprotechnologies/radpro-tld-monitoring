@@ -1,0 +1,35 @@
+services:
+  radpro-tld:
+    build: .
+    container_name: radpro-tld-monitoring
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      SESSION_SECRET: ${SESSION_SECRET:-change_this_to_a_long_random_value}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      DATA_DIR: /app/data
+      DB_FILE: /app/data/radpro_tld.db
+      UPLOAD_DIR: /app/data/uploads
+      MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:3000}
+      TWO_FACTOR_REQUIRED: ${TWO_FACTOR_REQUIRED:-false}
+      AUTO_REMINDERS_ENABLED: ${AUTO_REMINDERS_ENABLED:-false}
+      REMINDER_INTERVAL_HOURS: ${REMINDER_INTERVAL_HOURS:-24}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_API_URL: ${WHATSAPP_API_URL:-}
+      BACKUP_KDF_ITERATIONS: ${BACKUP_KDF_ITERATIONS:-150000}
+    volumes:
+      - radpro_tld_data:/app/data
+
+volumes:
+  radpro_tld_data:

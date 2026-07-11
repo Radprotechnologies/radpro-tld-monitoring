@@ -1,0 +1,7 @@
+Radpro TLD Phase 2B.4.3
+
+- Fixed Dose Trend & Summary chart container to a compact 250 px height.
+- Prevented Chart.js responsive canvas from stretching the page vertically.
+- Added a compact empty-state message when no dose records exist.
+- Mobile chart height limited to 220 px.
+- No workflow, database, role, department, or PostgreSQL logic changed.

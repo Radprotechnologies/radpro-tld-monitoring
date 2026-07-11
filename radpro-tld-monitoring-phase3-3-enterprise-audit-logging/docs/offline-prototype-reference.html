@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TLD Personal Monitoring Service - Radpro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(16,185,129,.22), transparent 28rem),
+        radial-gradient(circle at top right, rgba(14,165,233,.16), transparent 30rem),
+        linear-gradient(135deg, #020617 0%, #0f172a 45%, #111827 100%);
+    }
+    .glass-card {
+      background: rgba(2, 6, 23, 0.78);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 18px 44px rgba(0,0,0,.28);
+      backdrop-filter: blur(16px);
+    }
+    .soft-card { background: rgba(15, 23, 42, .72); border: 1px solid rgba(148, 163, 184, .12); }
+    .input-field { width: 100%; border-radius: .75rem; background: rgba(15,23,42,.92); border: 1px solid rgb(51 65 85); padding: .55rem .75rem; font-size: .75rem; outline: none; }
+    .input-field:focus { border-color: rgb(52 211 153); box-shadow: 0 0 0 2px rgba(52,211,153,.16); }
+    .btn-primary { border-radius: .75rem; background: rgb(52 211 153); color: #020617; font-weight: 700; font-size: .75rem; padding: .55rem .9rem; }
+    .btn-primary:hover { background: rgb(110 231 183); }
+    .btn-secondary { border-radius: .75rem; border: 1px solid rgb(51 65 85); font-size: .75rem; padding: .55rem .9rem; }
+    .btn-secondary:hover { background: rgba(15,23,42,.96); }
+    .btn-danger { border-radius: .75rem; border: 1px solid rgba(248,113,113,.5); color: rgb(252 165 165); font-size: .75rem; padding: .45rem .75rem; }
+    .btn-danger:hover { background: rgba(127,29,29,.35); }
+    .admin-tab.tab-active { background: rgba(52, 211, 153, .14); border-color: rgba(52, 211, 153, .65); color: rgb(167 243 208); }
+    .status-pill { display:inline-flex; align-items:center; border-radius: 999px; padding: .15rem .5rem; font-size: 10px; border: 1px solid rgba(148,163,184,.22); }
+    .thin-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: rgba(100,116,139,.55); border-radius: 999px; }
+    @media print {
+      body { background: white !important; color: black !important; }
+      header, footer, .no-print, .admin-tab, #loginView, #adminView { display: none !important; }
+      #employeeView { display: block !important; }
+      .glass-card, .soft-card { background: white !important; color: black !important; border-color: #999 !important; box-shadow: none !important; }
+      table { color: black !important; }
+    }
+  </style>
+</head>
+<body class="text-slate-100 min-h-screen">
+<div class="min-h-screen flex flex-col">
+
+  <header class="sticky top-0 z-30 bg-slate-950/75 border-b border-slate-800 backdrop-blur-xl no-print">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="h-11 w-11 rounded-2xl bg-gradient-to-br from-emerald-300 to-cyan-300 flex items-center justify-center font-black text-slate-950 shadow-lg shadow-emerald-900/30">
+          TLD
+        </div>
+        <div>
+          <h1 class="text-xl font-semibold tracking-wide">TLD Personal Monitoring Service</h1>
+          <p class="text-xs text-slate-400">Radpro Technologies · RSO driven personnel dose, document and compliance management</p>
+        </div>
+      </div>
+      <div id="currentUserInfo" class="text-right text-xs hidden">
+        <div class="font-semibold" id="currentUserName"></div>
+        <div class="text-slate-400" id="currentUserRole"></div>
+        <button id="logoutBtn" class="mt-1 inline-flex items-center px-3 py-1 text-xs rounded-full border border-slate-600 hover:bg-slate-800">
+          Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1">
+    <div class="max-w-7xl mx-auto px-4 py-6">
+
+      <section id="loginView" class="max-w-md mx-auto">
+        <div class="glass-card rounded-3xl p-6 mt-10">
+          <div class="text-center mb-5">
+            <div class="mx-auto h-14 w-14 rounded-2xl bg-emerald-400 text-slate-950 flex items-center justify-center font-black mb-3">RSO</div>
+            <h2 class="text-xl font-semibold">Secure Login</h2>
+            <p class="text-xs text-slate-400 mt-1">Admin and employee portal for TLD dose records, forms and quarterly reports</p>
+          </div>
+
+          <div class="text-xs mb-4 soft-card rounded-2xl p-3 text-emerald-100">
+            <div class="font-semibold mb-1">First-time use demo account</div>
+            <div>Username: <span class="font-mono bg-slate-800 px-1 rounded">rso</span></div>
+            <div>Password: <span class="font-mono bg-slate-800 px-1 rounded">rso123</span></div>
+          </div>
+
+          <label class="block text-xs font-semibold mb-1">Username</label>
+          <input id="loginUsername" type="text" class="input-field mb-3" autocomplete="username">
+          <label class="block text-xs font-semibold mb-1">Password</label>
+          <input id="loginPassword" type="password" class="input-field mb-4" autocomplete="current-password">
+          <button id="loginBtn" class="w-full btn-primary">Login</button>
+          <p id="loginError" class="text-xs text-red-400 mt-3 hidden"></p>
+        </div>
+      </section>
+
+      <section id="adminView" class="hidden">
+        <div class="mb-6 glass-card rounded-3xl p-5 overflow-hidden relative">
+          <div class="absolute inset-y-0 right-0 w-72 bg-gradient-to-l from-emerald-500/10 to-transparent pointer-events-none"></div>
+          <div class="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase tracking-[0.26em] text-emerald-300 mb-2">RSO Command Center</p>
+              <h2 class="text-2xl font-semibold">Personnel dose, forms and quarterly TLD report control</h2>
+              <p class="text-xs text-slate-400 mt-2 max-w-3xl">Upload employee filled personal monitoring forms, attach quarterly TLD reports, review compliance gaps and preserve a browser-based backup.</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs min-w-[260px]">
+              <div class="soft-card rounded-2xl p-3"><div class="text-slate-400">Current Quarter</div><div id="heroCurrentQuarter" class="text-lg font-bold text-emerald-300">-</div></div>
+              <div class="soft-card rounded-2xl p-3"><div class="text-slate-400">Storage Used</div><div id="cardStorage" class="text-lg font-bold">0 KB</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3 mb-6">
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Employees</div><div id="cardTotalEmployees" class="text-2xl font-bold">0</div></div>
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Active Badges</div><div id="cardActiveBadges" class="text-2xl font-bold">0</div></div>
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Dose Records</div><div id="cardDoseRecords" class="text-2xl font-bold">0</div></div>
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Dose Alerts</div><div id="cardAlerts" class="text-2xl font-bold text-amber-300">0</div></div>
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Employee Forms</div><div id="cardEmployeeForms" class="text-2xl font-bold text-cyan-300">0</div></div>
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Quarter Reports</div><div id="cardQuarterReports" class="text-2xl font-bold text-indigo-300">0</div></div>
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Pending Ack.</div><div id="cardPendingAck" class="text-2xl font-bold text-orange-300">0</div></div>
+          <div class="glass-card rounded-2xl p-4"><div class="text-[11px] text-slate-400 mb-1">Form Completion</div><div id="cardFormCompletion" class="text-2xl font-bold">0%</div></div>
+        </div>
+
+        <div class="mb-4 flex flex-wrap gap-2 text-xs no-print">
+          <button data-tab="tabEmployees" class="admin-tab px-3 py-2 rounded-full border border-slate-700 tab-active">Employees &amp; Forms</button>
+          <button data-tab="tabReports" class="admin-tab px-3 py-2 rounded-full border border-slate-700">TLD Reports &amp; Quarters</button>
+          <button data-tab="tabDocuments" class="admin-tab px-3 py-2 rounded-full border border-slate-700">Document Vault &amp; Compliance</button>
+          <button data-tab="tabAnalytics" class="admin-tab px-3 py-2 rounded-full border border-slate-700">Dose Analytics &amp; Alerts</button>
+          <button data-tab="tabSettings" class="admin-tab px-3 py-2 rounded-full border border-slate-700">Settings &amp; Backup</button>
+        </div>
+
+        <div id="tabEmployees" class="admin-tab-panel">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="space-y-6 xl:col-span-1">
+              <div class="glass-card rounded-3xl p-4">
+                <h3 class="text-sm font-semibold mb-3">Add / Edit Employee</h3>
+                <input type="hidden" id="employeeId">
+                <label class="block text-xs font-semibold mb-1">Full Name</label>
+                <input id="empName" type="text" class="input-field mb-2">
+                <label class="block text-xs font-semibold mb-1">Department</label>
+                <input id="empDept" type="text" class="input-field mb-2">
+                <label class="block text-xs font-semibold mb-1">Role</label>
+                <select id="empRole" class="input-field mb-2">
+                  <option value="RSO">RSO (Admin)</option>
+                  <option value="Radiation Oncologist">Radiation Oncologist</option>
+                  <option value="Medical Physicist">Medical Physicist</option>
+                  <option value="RT Technologist">RT Technologist</option>
+                  <option value="Radiology Staff">Radiology Staff</option>
+                  <option value="Nuclear Medicine Staff">Nuclear Medicine Staff</option>
+                  <option value="Other">Other</option>
+                </select>
+                <label class="block text-xs font-semibold mb-1">TLD Badge Number</label>
+                <input id="empTldNumber" type="text" class="input-field mb-2" placeholder="Must match first column in report">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div><label class="block text-xs font-semibold mb-1">Username</label><input id="empUsername" type="text" class="input-field mb-2"></div>
+                  <div><label class="block text-xs font-semibold mb-1">Password</label><input id="empPassword" type="password" class="input-field mb-2"></div>
+                </div>
+                <div class="flex items-center justify-between text-xs mb-3 gap-3">
+                  <label class="flex items-center gap-2"><input id="empEnabled" type="checkbox" class="rounded border-slate-700 bg-slate-900" checked><span>Active</span></label>
+                  <label class="flex items-center gap-2"><input id="empIsRSO" type="checkbox" class="rounded border-slate-700 bg-slate-900"><span>RSO Admin</span></label>
+                </div>
+                <div class="flex gap-2">
+                  <button id="saveEmployeeBtn" class="flex-1 btn-primary">Save Employee</button>
+                  <button id="resetEmployeeFormBtn" class="btn-secondary">Reset</button>
+                </div>
+                <p id="employeeFormMsg" class="text-xs mt-2 text-emerald-300 hidden"></p>
+              </div>
+
+              <div class="glass-card rounded-3xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold">Attach Filled Personal Monitoring Form</h3>
+                  <span class="status-pill text-emerald-200 bg-emerald-950/40">Per employee</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mb-3">Store the signed/filled TLD personal monitoring form for the selected employee and quarter.</p>
+                <label class="block text-xs font-semibold mb-1">Employee</label>
+                <select id="formAttachmentEmployee" class="input-field mb-2"></select>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div><label class="block text-xs font-semibold mb-1">Quarter</label><select id="formAttachmentQuarter" data-quarter-select="true" class="input-field mb-2"></select></div>
+                  <div><label class="block text-xs font-semibold mb-1">Form Date</label><input id="formAttachmentDate" type="date" class="input-field mb-2"></div>
+                </div>
+                <label class="block text-xs font-semibold mb-1">Form Status</label>
+                <select id="formAttachmentStatus" class="input-field mb-2">
+                  <option value="Filled & Signed">Filled &amp; Signed</option>
+                  <option value="Filled - Pending Signature">Filled - Pending Signature</option>
+                  <option value="Correction Required">Correction Required</option>
+                </select>
+                <label class="block text-xs font-semibold mb-1">Attachment</label>
+                <input id="formAttachmentFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv" class="w-full mb-2 text-xs text-slate-300">
+                <label class="block text-xs font-semibold mb-1">RSO Notes</label>
+                <textarea id="formAttachmentNotes" rows="3" class="input-field mb-3" placeholder="Optional remarks / corrections / follow-up"></textarea>
+                <button id="uploadEmployeeFormBtn" class="w-full btn-primary">Upload Filled Form</button>
+                <p id="formAttachmentMsg" class="text-xs mt-2 hidden"></p>
+              </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-4 xl:col-span-2">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                <div>
+                  <h3 class="text-sm font-semibold">Employee &amp; TLD Master</h3>
+                  <p class="text-[11px] text-slate-400">Form count and latest dose are shown for quick follow-up.</p>
+                </div>
+                <input id="empSearch" type="text" class="input-field max-w-xs" placeholder="Search by name / TLD / dept">
+              </div>
+              <div class="overflow-x-auto max-h-[560px] text-xs thin-scroll">
+                <table class="min-w-full text-left border border-slate-800">
+                  <thead class="bg-slate-900/90 sticky top-0 z-10">
+                  <tr>
+                    <th class="px-2 py-2 border-b border-slate-800">Name</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Dept</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Role</th>
+                    <th class="px-2 py-2 border-b border-slate-800">TLD No.</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Forms</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Latest Dose</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Status</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Actions</th>
+                  </tr>
+                  </thead>
+                  <tbody id="employeeTableBody"></tbody>
+                </table>
+              </div>
+
+              <div class="border-t border-slate-800 mt-4 pt-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold">Recently Uploaded Employee Forms</h3>
+                  <button data-switch-tab="tabDocuments" class="btn-secondary text-[11px]">Open Document Vault</button>
+                </div>
+                <div class="overflow-x-auto max-h-72 text-xs thin-scroll">
+                  <table class="min-w-full text-left border border-slate-800">
+                    <thead class="bg-slate-900/90 sticky top-0"><tr>
+                      <th class="px-2 py-2 border-b border-slate-800">Employee</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Quarter</th>
+                      <th class="px-2 py-2 border-b border-slate-800">File</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Status</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Uploaded</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Actions</th>
+                    </tr></thead>
+                    <tbody id="employeeFormAttachmentBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabReports" class="admin-tab-panel hidden">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="space-y-6 xl:col-span-1">
+              <div class="glass-card rounded-3xl p-4">
+                <h3 class="text-sm font-semibold mb-3">Import TLD Dose Report</h3>
+                <p class="text-xs text-slate-400 mb-3">Upload vendor TLD report in <span class="font-semibold text-emerald-300">CSV / Excel / text-based PDF</span>. First column = <span class="font-semibold">TLD number</span>.</p>
+                <label class="block text-xs font-semibold mb-1">Reporting Period Label</label>
+                <input id="reportPeriod" type="text" class="input-field mb-2" placeholder="e.g. Apr–Jun 2026">
+                <label class="block text-xs font-semibold mb-1">Quarter</label>
+                <select id="reportQuarter" data-quarter-select="true" class="input-field mb-2"></select>
+                <label class="block text-xs font-semibold mb-1">Upload File</label>
+                <input id="tldFileInput" type="file" accept=".csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/pdf" class="w-full mb-2 text-xs text-slate-300">
+                <label class="flex items-start gap-2 text-[11px] text-slate-300 mb-3">
+                  <input id="saveImportAsQuarterReport" type="checkbox" checked class="mt-1 rounded border-slate-700 bg-slate-900">
+                  <span>Also save this file as the quarterly TLD report attachment.</span>
+                </label>
+                <p class="text-[11px] text-slate-500 mb-3">PDF must be text-based. The parser assumes the last two numeric values in each row are Hp(10) and Hp(0.07).</p>
+                <button id="parseTldFileBtn" class="w-full btn-primary">Parse &amp; Import Dose Records</button>
+                <p id="tldImportMsg" class="text-xs mt-2 hidden"></p>
+              </div>
+
+              <div class="glass-card rounded-3xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold">Quarterly TLD Report Attachment</h3>
+                  <span class="status-pill text-cyan-200 bg-cyan-950/40">Per quarter</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mb-3">Attach the official quarterly TLD report, covering memo, or vendor certificate for RSO records.</p>
+                <label class="block text-xs font-semibold mb-1">Quarter</label>
+                <select id="quarterAttachmentQuarter" data-quarter-select="true" class="input-field mb-2"></select>
+                <label class="block text-xs font-semibold mb-1">Period Label</label>
+                <input id="quarterAttachmentPeriod" type="text" class="input-field mb-2" placeholder="e.g. Apr–Jun 2026">
+                <label class="block text-xs font-semibold mb-1">Attachment</label>
+                <input id="quarterAttachmentFile" type="file" accept=".pdf,.png,.jpg,.jpeg,.doc,.docx,.xls,.xlsx,.csv" class="w-full mb-2 text-xs text-slate-300">
+                <label class="flex items-center gap-2 text-[11px] text-slate-300 mb-2">
+                  <input id="quarterAttachmentPublish" type="checkbox" class="rounded border-slate-700 bg-slate-900">
+                  <span>Publish to employee portal</span>
+                </label>
+                <label class="block text-xs font-semibold mb-1">Notes</label>
+                <textarea id="quarterAttachmentNotes" rows="3" class="input-field mb-3" placeholder="Dispatch number / report reference / comments"></textarea>
+                <button id="uploadQuarterReportBtn" class="w-full btn-primary">Upload Quarterly Report</button>
+                <p id="quarterAttachmentMsg" class="text-xs mt-2 hidden"></p>
+              </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-4 xl:col-span-2">
+              <h3 class="text-sm font-semibold mb-2">Parsed Dose Records Preview</h3>
+              <p class="text-xs text-slate-400 mb-2">Mapped via TLD badge number. Rows without matching TLD show <span class="text-amber-300 font-semibold">No matching TLD</span>.</p>
+              <div class="overflow-x-auto max-h-64 text-xs mb-4 thin-scroll">
+                <table class="min-w-full text-left border border-slate-800">
+                  <thead class="bg-slate-900/90 sticky top-0"><tr>
+                    <th class="px-2 py-2 border-b border-slate-800">TLD No.</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Employee</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Period</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Quarter</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Hp(10)</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Hp(0.07)</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Status</th>
+                  </tr></thead>
+                  <tbody id="tldPreviewBody"></tbody>
+                </table>
+              </div>
+
+              <div class="border-t border-slate-800 pt-4 mt-4">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-3">
+                  <div>
+                    <h3 class="text-sm font-semibold">TLD Report Period Viewer</h3>
+                    <p class="text-[11px] text-slate-400">Review dose records for a period/quarter and confirm attached report availability.</p>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 text-xs">
+                    <select id="periodSelect" class="input-field min-w-[180px]"></select>
+                    <button id="refreshPeriodBtn" class="btn-primary">View</button>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3 text-xs">
+                  <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Badges</div><div id="periodBadgeCount" class="text-lg font-bold">0</div></div>
+                  <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Total Hp(10)</div><div id="periodTotalHp10" class="text-lg font-bold">0.00</div></div>
+                  <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Average Hp(10)</div><div id="periodAvgHp10" class="text-lg font-bold">0.00</div></div>
+                  <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Quarter Files</div><div id="periodAttachmentCount" class="text-lg font-bold">0</div></div>
+                </div>
+
+                <div class="overflow-x-auto max-h-64 text-xs mb-4 thin-scroll">
+                  <table class="min-w-full text-left border border-slate-800">
+                    <thead class="bg-slate-900/90 sticky top-0"><tr>
+                      <th class="px-2 py-2 border-b border-slate-800">Employee</th>
+                      <th class="px-2 py-2 border-b border-slate-800">TLD No.</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Hp(10)</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Hp(0.07)</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Remarks</th>
+                    </tr></thead>
+                    <tbody id="periodReportBody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div class="border-t border-slate-800 pt-4 mt-4">
+                <h3 class="text-sm font-semibold mb-2">Quarterly Report Attachments</h3>
+                <div class="overflow-x-auto max-h-72 text-xs thin-scroll">
+                  <table class="min-w-full text-left border border-slate-800">
+                    <thead class="bg-slate-900/90 sticky top-0"><tr>
+                      <th class="px-2 py-2 border-b border-slate-800">Quarter</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Period</th>
+                      <th class="px-2 py-2 border-b border-slate-800">File</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Published</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Uploaded</th>
+                      <th class="px-2 py-2 border-b border-slate-800">Actions</th>
+                    </tr></thead>
+                    <tbody id="quarterReportAttachmentBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabDocuments" class="admin-tab-panel hidden">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="glass-card rounded-3xl p-4 xl:col-span-1">
+              <h3 class="text-sm font-semibold mb-3">Compliance Filters</h3>
+              <label class="block text-xs font-semibold mb-1">Quarter</label>
+              <select id="complianceQuarter" data-quarter-select="true" class="input-field mb-3"></select>
+              <button id="refreshComplianceBtn" class="w-full btn-primary mb-3">Refresh Compliance</button>
+              <div class="soft-card rounded-2xl p-3 text-xs space-y-2">
+                <div class="font-semibold text-emerald-200">Additional feature added</div>
+                <p class="text-slate-400">This matrix checks whether each active employee has a dose record, filled personal monitoring form and employee acknowledgement for the selected quarter.</p>
+              </div>
+              <div class="grid grid-cols-2 gap-3 text-xs mt-3">
+                <div class="soft-card rounded-2xl p-3"><div class="text-slate-400">Complete</div><div id="complianceCompleteCount" class="text-xl font-bold text-emerald-300">0</div></div>
+                <div class="soft-card rounded-2xl p-3"><div class="text-slate-400">Needs Action</div><div id="complianceNeedsActionCount" class="text-xl font-bold text-amber-300">0</div></div>
+              </div>
+            </div>
+            <div class="glass-card rounded-3xl p-4 xl:col-span-2">
+              <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-3">
+                <div>
+                  <h3 class="text-sm font-semibold">Quarter Compliance Matrix</h3>
+                  <p class="text-[11px] text-slate-400">Use this before closing each quarter.</p>
+                </div>
+              </div>
+              <div class="overflow-x-auto max-h-[430px] text-xs thin-scroll">
+                <table class="min-w-full text-left border border-slate-800">
+                  <thead class="bg-slate-900/90 sticky top-0"><tr>
+                    <th class="px-2 py-2 border-b border-slate-800">Employee</th>
+                    <th class="px-2 py-2 border-b border-slate-800">TLD</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Dose Record</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Filled Form</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Acknowledgement</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Status</th>
+                  </tr></thead>
+                  <tbody id="complianceBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-3xl p-4 mt-6">
+            <div class="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-3 mb-3">
+              <div>
+                <h3 class="text-sm font-semibold">Document Vault</h3>
+                <p class="text-[11px] text-slate-400">Central searchable repository for employee forms and quarterly report attachments.</p>
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-2 w-full xl:w-auto text-xs">
+                <select id="docFilterType" class="input-field"><option value="all">All document types</option><option value="employeeForm">Employee filled forms</option><option value="quarterReport">Quarterly TLD reports</option></select>
+                <select id="docFilterQuarter" class="input-field"><option value="all">All quarters</option></select>
+                <select id="docFilterEmployee" class="input-field"><option value="all">All employees</option></select>
+                <input id="docSearch" type="text" class="input-field" placeholder="Search file / notes">
+              </div>
+            </div>
+            <div class="overflow-x-auto max-h-[520px] text-xs thin-scroll">
+              <table class="min-w-full text-left border border-slate-800">
+                <thead class="bg-slate-900/90 sticky top-0"><tr>
+                  <th class="px-2 py-2 border-b border-slate-800">Type</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Employee</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Quarter</th>
+                  <th class="px-2 py-2 border-b border-slate-800">File</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Notes</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Size</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Uploaded</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Actions</th>
+                </tr></thead>
+                <tbody id="documentVaultBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabAnalytics" class="admin-tab-panel hidden">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="glass-card rounded-3xl p-4 lg:col-span-1">
+              <h3 class="text-sm font-semibold mb-3">Dose Analytics Filters</h3>
+              <label class="block text-xs font-semibold mb-1">Select Employee</label>
+              <select id="analyticsEmployeeSelect" class="input-field mb-3"></select>
+              <label class="block text-xs font-semibold mb-1">Dose Year</label>
+              <select id="analyticsYearSelect" class="input-field mb-3"></select>
+              <label class="block text-xs font-semibold mb-1">Annual Dose Limit Hp(10), mSv</label>
+              <input id="annualLimit" type="number" value="20" min="0" step="0.1" class="input-field mb-3">
+              <button id="refreshAnalyticsBtn" class="w-full btn-primary mb-3">Refresh Analytics</button>
+              <div class="soft-card rounded-2xl p-3 text-xs">
+                <div class="font-semibold mb-1">Alert Logic</div>
+                <ul class="list-disc list-inside text-slate-400 space-y-1">
+                  <li>Amber: cumulative ≥ 80% of annual limit</li>
+                  <li>Red: cumulative ≥ 100% of annual limit</li>
+                  <li>Quarterly investigation: high individual quarter dose</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-4 lg:col-span-2">
+              <h3 class="text-sm font-semibold mb-3">Dose Trend &amp; Summary</h3>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4 text-xs">
+                <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Cumulative Hp(10)</div><div id="analyticsCumHp10" class="text-xl font-bold">0.00</div></div>
+                <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Status</div><div id="analyticsStatus" class="text-xl font-bold text-emerald-400">OK</div></div>
+                <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Dose Records</div><div id="analyticsBadgeCount" class="text-xl font-bold">0</div></div>
+                <div class="soft-card rounded-2xl p-3"><div class="text-slate-400 mb-1">Attached Forms</div><div id="analyticsFormCount" class="text-xl font-bold">0</div></div>
+              </div>
+              <canvas id="doseTrendChart" class="w-full h-56 mb-4"></canvas>
+
+              <h4 class="text-xs font-semibold mb-2">High Dose / Alert Cases</h4>
+              <div class="overflow-x-auto max-h-56 text-xs thin-scroll">
+                <table class="min-w-full text-left border border-slate-800">
+                  <thead class="bg-slate-900/90 sticky top-0"><tr>
+                    <th class="px-2 py-2 border-b border-slate-800">Employee</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Period</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Quarter</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Hp(10)</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Status</th>
+                    <th class="px-2 py-2 border-b border-slate-800">Investigation Note</th>
+                  </tr></thead>
+                  <tbody id="alertTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabSettings" class="admin-tab-panel hidden">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="glass-card rounded-3xl p-4 xl:col-span-2">
+              <h3 class="text-sm font-semibold mb-3">RSO Notes &amp; System Options</h3>
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 text-xs">
+                <div>
+                  <label class="block font-semibold mb-1">Department / Institution Name</label>
+                  <input id="settingDeptName" type="text" class="input-field mb-3">
+                  <label class="block font-semibold mb-1">RSO General Notes</label>
+                  <textarea id="settingRsoNotes" rows="7" class="input-field mb-3"></textarea>
+                  <button id="saveSettingsBtn" class="btn-primary">Save Settings</button>
+                  <p id="settingsMsg" class="mt-2 text-emerald-300 hidden"></p>
+                </div>
+                <div>
+                  <div class="soft-card rounded-2xl p-3 mb-3">
+                    <div class="font-semibold mb-1 text-emerald-200">New features included</div>
+                    <ul class="list-disc list-inside text-slate-400 space-y-1">
+                      <li>Per-employee filled TLD personal monitoring form attachments</li>
+                      <li>Quarter-wise official TLD report attachments</li>
+                      <li>Document vault with filter/search/download/delete</li>
+                      <li>Quarter compliance matrix</li>
+                      <li>Employee portal document access and latest-dose acknowledgement</li>
+                      <li>Audit log and backup import/export including attachments</li>
+                    </ul>
+                  </div>
+                  <div class="soft-card rounded-2xl p-3 text-slate-400">
+                    <div class="font-semibold text-slate-200 mb-1">Storage note</div>
+                    <p>Attachments are saved in browser LocalStorage as data URLs. Use small PDFs/images and export backups regularly.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card rounded-3xl p-4">
+              <h3 class="text-sm font-semibold mb-3">Backup &amp; Restore</h3>
+              <button id="exportDataBtn" class="w-full btn-primary mb-3">Export All Data JSON</button>
+              <label class="block text-xs font-semibold mb-1">Restore from JSON backup</label>
+              <input id="importDataInput" type="file" accept="application/json,.json" class="w-full text-xs text-slate-300 mb-2">
+              <p id="importDataMsg" class="text-xs hidden mb-3"></p>
+              <div class="soft-card rounded-2xl p-3 text-xs">
+                <div class="font-semibold mb-1">LocalStorage Used</div>
+                <div id="storageDetail" class="text-slate-400">0 KB</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-3xl p-4 mt-6">
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-sm font-semibold">Audit Log</h3>
+              <button id="clearAuditBtn" class="btn-secondary text-[11px]">Clear Audit Log</button>
+            </div>
+            <div class="overflow-x-auto max-h-80 text-xs thin-scroll">
+              <table class="min-w-full text-left border border-slate-800">
+                <thead class="bg-slate-900/90 sticky top-0"><tr>
+                  <th class="px-2 py-2 border-b border-slate-800">Time</th>
+                  <th class="px-2 py-2 border-b border-slate-800">User</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Action</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Details</th>
+                </tr></thead>
+                <tbody id="auditLogBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="employeeView" class="hidden">
+        <div class="glass-card rounded-3xl p-4 mb-4">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs">
+            <div>
+              <div class="text-slate-400 mb-1">Employee</div>
+              <div id="empViewName" class="text-base font-semibold"></div>
+              <div id="empViewDept" class="text-slate-400"></div>
+            </div>
+            <div>
+              <div class="text-slate-400 mb-1">TLD Badge Number</div>
+              <div id="empViewTld" class="text-base font-semibold"></div>
+            </div>
+            <div>
+              <div class="text-slate-400 mb-1">Annual Cumulative Hp(10), mSv</div>
+              <div id="empViewCumHp10" class="text-xl font-bold"></div>
+              <div id="empViewStatus" class="text-xs mt-1"></div>
+            </div>
+            <div class="flex flex-col items-start md:items-end gap-2 no-print">
+              <button id="empPrintBtn" class="btn-secondary">Print / Save as PDF</button>
+              <label class="flex items-center gap-2">
+                <input id="empAcknowledged" type="checkbox" class="rounded border-slate-700 bg-slate-900">
+                <span id="empAckText" class="text-[11px]">I have reviewed my latest TLD dose</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="glass-card rounded-3xl p-4 lg:col-span-2">
+            <h3 class="text-sm font-semibold mb-3">My TLD Dose History</h3>
+            <div class="overflow-x-auto max-h-[420px] text-xs thin-scroll">
+              <table class="min-w-full text-left border border-slate-800">
+                <thead class="bg-slate-900/90 sticky top-0"><tr>
+                  <th class="px-2 py-2 border-b border-slate-800">Period</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Quarter</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Hp(10)</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Hp(0.07)</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Remarks</th>
+                  <th class="px-2 py-2 border-b border-slate-800">Status</th>
+                </tr></thead>
+                <tbody id="empDoseTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="glass-card rounded-3xl p-4">
+            <h3 class="text-sm font-semibold mb-2">My Attached Forms</h3>
+            <p class="text-[11px] text-slate-400 mb-3">Filled personal monitoring forms uploaded by RSO.</p>
+            <div id="empFormsList" class="space-y-2 text-xs max-h-[420px] overflow-y-auto thin-scroll"></div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-3xl p-4 mt-6">
+          <h3 class="text-sm font-semibold mb-2">Published Quarterly TLD Reports</h3>
+          <p class="text-[11px] text-slate-400 mb-3">Only quarterly report attachments marked by RSO as published are shown here.</p>
+          <div id="empQuarterReportsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs"></div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-800 bg-slate-950/75 text-[10px] text-slate-500 no-print">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row md:items-center md:justify-between gap-1">
+      <div>Radpro Technologies · TLD Personal Monitoring (Offline Prototype)</div>
+      <div>Browser LocalStorage data · Export backups regularly</div>
+    </div>
+  </footer>
+</div>
+
+<script>
+  if (window['pdfjsLib']) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js";
+  }
+
+  const KEY_EMPLOYEES = "tld_employees";
+  const KEY_DOSES = "tld_doses";
+  const KEY_CURRENT_USER = "tld_current_user";
+  const KEY_SETTINGS = "tld_settings";
+  const KEY_ACK = "tld_acknowledgements";
+  const KEY_ATTACHMENTS = "tld_attachments";
+  const KEY_AUDIT = "tld_audit_log";
+  const MAX_ATTACHMENT_MB = 3;
+
+  function loadJSON(key, fallback){
+    try { const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; }
+    catch { return fallback; }
+  }
+  function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+  function escapeHTML(value){
+    return String(value ?? "").replace(/[&<>'"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[ch]));
+  }
+  function nowISO(){ return new Date().toISOString(); }
+  function fmtDate(iso){ if(!iso) return ""; try { return new Date(iso).toLocaleString(); } catch { return iso; } }
+  function fmtSize(bytes){
+    const b = Number(bytes || 0);
+    if(b < 1024) return b + " B";
+    if(b < 1024*1024) return (b/1024).toFixed(1) + " KB";
+    return (b/(1024*1024)).toFixed(2) + " MB";
+  }
+  function getCurrentUser(){ return loadJSON(KEY_CURRENT_USER, null); }
+  function currentUserLabel(){ const u = getCurrentUser(); return u ? `${u.name}${u.isRSO ? " (RSO)" : ""}` : "System"; }
+  function logAudit(action, details){
+    const list = loadJSON(KEY_AUDIT, []);
+    list.unshift({ id: "audit_" + Date.now(), at: nowISO(), user: currentUserLabel(), action, details });
+    saveJSON(KEY_AUDIT, list.slice(0, 250));
+  }
+  function setMsg(id, text, ok=true){
+    const el = document.getElementById(id); if(!el) return;
+    el.textContent = text;
+    el.classList.remove("hidden", "text-emerald-300", "text-red-400", "text-amber-300");
+    el.classList.add(ok ? "text-emerald-300" : "text-red-400");
+  }
+  function clearMsg(id){ const el = document.getElementById(id); if(el) el.classList.add("hidden"); }
+
+  function getCurrentQuarterLabel(date = new Date()){
+    const q = Math.floor(date.getMonth()/3) + 1;
+    return `Q${q} ${date.getFullYear()}`;
+  }
+  function quarterToSortKey(q){
+    const m = String(q || "").match(/Q([1-4])\s*(\d{4})/i);
+    return m ? Number(m[2])*10 + Number(m[1]) : 0;
+  }
+  function buildQuarterLabels(count = 14){
+    const d = new Date();
+    let q = Math.floor(d.getMonth()/3) + 1;
+    let y = d.getFullYear();
+    const out = [];
+    for(let i=0; i<count; i++){
+      out.push(`Q${q} ${y}`);
+      q -= 1;
+      if(q < 1){ q = 4; y -= 1; }
+    }
+    return out;
+  }
+  function renderQuarterSelect(select, selectedValue, includeAll=false){
+    if(!select) return;
+    const attachmentQuarters = loadJSON(KEY_ATTACHMENTS, []).map(a => a.quarter).filter(Boolean);
+    const doseQuarters = loadJSON(KEY_DOSES, []).map(d => d.quarter).filter(Boolean);
+    const quarters = [...new Set([...buildQuarterLabels(14), ...attachmentQuarters, ...doseQuarters])]
+      .sort((a,b) => quarterToSortKey(b) - quarterToSortKey(a));
+    const selected = selectedValue || select.value || getCurrentQuarterLabel();
+    select.innerHTML = includeAll ? `<option value="all">All quarters</option>` : "";
+    quarters.forEach(q => {
+      const opt = document.createElement("option"); opt.value = q; opt.textContent = q; select.appendChild(opt);
+    });
+    if([...select.options].some(o => o.value === selected)) select.value = selected;
+  }
+  function refreshQuarterSelects(){
+    document.querySelectorAll('[data-quarter-select="true"]').forEach(sel => renderQuarterSelect(sel));
+    renderQuarterSelect(document.getElementById("docFilterQuarter"), "all", true);
+    document.getElementById("heroCurrentQuarter").textContent = getCurrentQuarterLabel();
+    if(!document.getElementById("formAttachmentDate").value){
+      document.getElementById("formAttachmentDate").valueAsDate = new Date();
+    }
+  }
+  function getYearFromQuarter(q){
+    const m = String(q || "").match(/(\d{4})/);
+    return m ? Number(m[1]) : new Date().getFullYear();
+  }
+  function doseYear(d){ return d.quarter ? getYearFromQuarter(d.quarter) : getYearFromQuarter(d.period || d.reportLabel || ""); }
+  function getDoseQuarter(d){ return d.quarter || d.reportLabel || d.period || "Not specified"; }
+  function makeAckKey(employeeId, quarterOrPeriod){ return `${employeeId}|${quarterOrPeriod || "latest"}`; }
+  function statusPill(text, kind="neutral"){
+    const classes = {
+      ok: "text-emerald-200 bg-emerald-950/40 border-emerald-700/40",
+      warn: "text-amber-200 bg-amber-950/40 border-amber-700/40",
+      danger: "text-red-200 bg-red-950/40 border-red-700/40",
+      info: "text-cyan-200 bg-cyan-950/40 border-cyan-700/40",
+      neutral: "text-slate-300 bg-slate-900/60 border-slate-700/60"
+    };
+    return `<span class="status-pill ${classes[kind] || classes.neutral}">${escapeHTML(text)}</span>`;
+  }
+  function emptyRow(colspan, text){ return `<tr><td colspan="${colspan}" class="px-2 py-4 text-center text-slate-500">${escapeHTML(text)}</td></tr>`; }
+
+  function ensureDemoRSO(){
+    let employees = loadJSON(KEY_EMPLOYEES, []);
+    if(!employees.some(e => e.isRSO)){
+      employees.push({
+        id:"emp_1", name:"RSO Admin", dept:"Radiation Safety", role:"RSO",
+        tldNumber:"1", username:"rso", password:"rso123", enabled:true, isRSO:true
+      });
+      saveJSON(KEY_EMPLOYEES, employees);
+    }
+  }
+
+  function updateHeaderUserInfo(user){
+    const info = document.getElementById("currentUserInfo");
+    if(user){
+      info.classList.remove("hidden");
+      document.getElementById("currentUserName").textContent = user.name;
+      document.getElementById("currentUserRole").textContent = user.isRSO ? "RSO Admin" : (user.role || "Employee");
+    } else {
+      info.classList.add("hidden");
+    }
+  }
+  function showView(v){
+    ["loginView", "adminView", "employeeView"].forEach(id => document.getElementById(id).classList.add("hidden"));
+    if(v === "login") document.getElementById("loginView").classList.remove("hidden");
+    if(v === "admin") document.getElementById("adminView").classList.remove("hidden");
+    if(v === "employee") document.getElementById("employeeView").classList.remove("hidden");
+  }
+  function login(u,p){
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    return employees.find(e => e.username === u && e.password === p && e.enabled) || null;
+  }
+  function handleLogin(){
+    const u = document.getElementById("loginUsername").value.trim();
+    const p = document.getElementById("loginPassword").value;
+    const user = login(u,p);
+    if(!user){ setMsg("loginError", "Invalid username/password or employee disabled.", false); return; }
+    clearMsg("loginError");
+    saveJSON(KEY_CURRENT_USER, user);
+    updateHeaderUserInfo(user);
+    logAudit("Login", `${user.name} logged in`);
+    if(user.isRSO){ showView("admin"); renderAdminUI(); }
+    else { showView("employee"); renderEmployeeUI(user); }
+  }
+  function handleLogout(){
+    const u = getCurrentUser();
+    if(u) logAudit("Logout", `${u.name} logged out`);
+    localStorage.removeItem(KEY_CURRENT_USER);
+    updateHeaderUserInfo(null);
+    showView("login");
+  }
+
+  function getStorageUsage(){
+    let total = 0;
+    for(let i=0; i<localStorage.length; i++){
+      const key = localStorage.key(i);
+      total += (key.length + (localStorage.getItem(key) || "").length) * 2;
+    }
+    return total;
+  }
+  function renderStorageUsage(){
+    const used = getStorageUsage();
+    document.getElementById("cardStorage").textContent = fmtSize(used);
+    document.getElementById("storageDetail").textContent = `${fmtSize(used)} used. Large attachments may exceed browser storage limits; keep backups.`;
+  }
+
+  function latestDoseForEmployee(empId){
+    const doses = loadJSON(KEY_DOSES, []).filter(d => d.employeeId === empId);
+    return doses.sort((a,b) => {
+      const ak = quarterToSortKey(getDoseQuarter(a));
+      const bk = quarterToSortKey(getDoseQuarter(b));
+      if(ak !== bk) return bk - ak;
+      return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
+    })[0] || null;
+  }
+  function isDoseAcked(empId, quarterOrPeriod){
+    const ack = loadJSON(KEY_ACK, {});
+    if(ack[makeAckKey(empId, quarterOrPeriod)]) return true;
+    if(ack[empId] === true) return true; // compatibility with old prototype acknowledgement
+    return false;
+  }
+  function activeEmployees(){ return loadJSON(KEY_EMPLOYEES, []).filter(e => e.enabled && !e.isRSO); }
+
+  function renderAdminUI(){
+    refreshQuarterSelects();
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    const doses = loadJSON(KEY_DOSES, []);
+    const attachments = loadJSON(KEY_ATTACHMENTS, []);
+    const annualLimit = parseFloat(document.getElementById("annualLimit")?.value || "20");
+    const currentQuarter = document.getElementById("complianceQuarter")?.value || getCurrentQuarterLabel();
+
+    document.getElementById("cardTotalEmployees").textContent = employees.length;
+    document.getElementById("cardActiveBadges").textContent = employees.filter(e => e.enabled && e.tldNumber).length;
+    document.getElementById("cardDoseRecords").textContent = doses.length;
+    document.getElementById("cardEmployeeForms").textContent = attachments.filter(a => a.type === "employeeForm").length;
+    document.getElementById("cardQuarterReports").textContent = attachments.filter(a => a.type === "quarterReport").length;
+
+    const cumByEmpYear = {};
+    const thisYear = new Date().getFullYear();
+    doses.forEach(d => {
+      if(doseYear(d) !== thisYear) return;
+      cumByEmpYear[d.employeeId] = (cumByEmpYear[d.employeeId] || 0) + parseFloat(d.hp10 || 0);
+    });
+    const alertCount = Object.values(cumByEmpYear).filter(c => c >= 0.8 * annualLimit).length;
+    document.getElementById("cardAlerts").textContent = alertCount;
+
+    const active = activeEmployees();
+    const formsThisQuarter = active.filter(e => attachments.some(a => a.type === "employeeForm" && a.employeeId === e.id && a.quarter === currentQuarter)).length;
+    const completion = active.length ? Math.round((formsThisQuarter / active.length) * 100) : 0;
+    document.getElementById("cardFormCompletion").textContent = completion + "%";
+    const pendingAck = active.filter(e => {
+      const latest = latestDoseForEmployee(e.id);
+      return latest && !isDoseAcked(e.id, getDoseQuarter(latest));
+    }).length;
+    document.getElementById("cardPendingAck").textContent = pendingAck;
+
+    renderStorageUsage();
+    renderEmployeeTable();
+    populateEmployeeSelects();
+    populateAnalyticsYearSelect();
+    renderEmployeeFormAttachmentTable();
+    renderQuarterReportAttachmentTable();
+    populatePeriodSelect();
+    renderDocumentVault();
+    renderComplianceMatrix();
+    renderAlertsTable();
+    loadSettingsIntoUI();
+    renderAuditLog();
+  }
+
+  function populateEmployeeSelects(){
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    const activeList = employees.filter(e => e.enabled);
+    const selects = ["formAttachmentEmployee", "analyticsEmployeeSelect", "docFilterEmployee"];
+    selects.forEach(id => {
+      const sel = document.getElementById(id); if(!sel) return;
+      const selected = sel.value;
+      sel.innerHTML = "";
+      if(id === "docFilterEmployee"){
+        const all = document.createElement("option"); all.value = "all"; all.textContent = "All employees"; sel.appendChild(all);
+      }
+      activeList.forEach(e => {
+        if(id !== "docFilterEmployee" && e.isRSO) return;
+        const opt = document.createElement("option"); opt.value = e.id; opt.textContent = `${e.name}${e.tldNumber ? " · TLD " + e.tldNumber : ""}`; sel.appendChild(opt);
+      });
+      if([...sel.options].some(o => o.value === selected)) sel.value = selected;
+    });
+  }
+  function resetEmployeeForm(){
+    document.getElementById("employeeId").value = "";
+    document.getElementById("empName").value = "";
+    document.getElementById("empDept").value = "";
+    document.getElementById("empRole").value = "Radiation Oncologist";
+    document.getElementById("empTldNumber").value = "";
+    document.getElementById("empUsername").value = "";
+    document.getElementById("empPassword").value = "";
+    document.getElementById("empEnabled").checked = true;
+    document.getElementById("empIsRSO").checked = false;
+    clearMsg("employeeFormMsg");
+  }
+  function saveEmployee(){
+    const id = document.getElementById("employeeId").value;
+    const name = document.getElementById("empName").value.trim();
+    const dept = document.getElementById("empDept").value.trim();
+    const role = document.getElementById("empRole").value;
+    const tldNumber = document.getElementById("empTldNumber").value.trim();
+    const username = document.getElementById("empUsername").value.trim();
+    const password = document.getElementById("empPassword").value;
+    const enabled = document.getElementById("empEnabled").checked;
+    const isRSO = document.getElementById("empIsRSO").checked;
+    if(!name || !username || !password){ setMsg("employeeFormMsg", "Name, username and password are mandatory.", false); return; }
+    let employees = loadJSON(KEY_EMPLOYEES, []);
+    const usernameTaken = employees.some(e => e.username === username && e.id !== id);
+    if(usernameTaken){ setMsg("employeeFormMsg", "Username already exists. Choose a unique username.", false); return; }
+    if(tldNumber){
+      const tldTaken = employees.some(e => e.tldNumber === tldNumber && e.id !== id);
+      if(tldTaken){ setMsg("employeeFormMsg", "TLD badge number already exists. Check the employee master.", false); return; }
+    }
+    if(id){
+      const emp = employees.find(e => e.id === id);
+      if(emp){ Object.assign(emp, {name, dept, role, tldNumber, username, password, enabled, isRSO}); }
+      logAudit("Employee updated", `${name} / TLD ${tldNumber || "not assigned"}`);
+    } else {
+      employees.push({ id: "emp_" + Date.now(), name, dept, role, tldNumber, username, password, enabled, isRSO });
+      logAudit("Employee added", `${name} / TLD ${tldNumber || "not assigned"}`);
+    }
+    saveJSON(KEY_EMPLOYEES, employees);
+    setMsg("employeeFormMsg", "Employee saved successfully.", true);
+    renderAdminUI();
+  }
+  function renderEmployeeTable(){
+    const tbody = document.getElementById("employeeTableBody");
+    const search = document.getElementById("empSearch").value.trim().toLowerCase();
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    const attachments = loadJSON(KEY_ATTACHMENTS, []);
+    const doses = loadJSON(KEY_DOSES, []);
+    tbody.innerHTML = "";
+    const rows = employees.filter(e => {
+      if(!search) return true;
+      return `${e.name} ${e.dept} ${e.role} ${e.tldNumber} ${e.username}`.toLowerCase().includes(search);
+    });
+    if(!rows.length){ tbody.innerHTML = emptyRow(8, "No employees found."); return; }
+    rows.forEach(emp => {
+      const formCount = attachments.filter(a => a.type === "employeeForm" && a.employeeId === emp.id).length;
+      const empDoses = doses.filter(d => d.employeeId === emp.id);
+      const latest = latestDoseForEmployee(emp.id);
+      const latestText = latest ? `${parseFloat(latest.hp10 || 0).toFixed(2)} mSv · ${getDoseQuarter(latest)}` : "-";
+      const tr = document.createElement("tr");
+      tr.className = "border-b border-slate-800 hover:bg-slate-900/40";
+      tr.innerHTML = `
+        <td class="px-2 py-2">${escapeHTML(emp.name)}${emp.isRSO ? ' <span class="ml-1 text-[10px] text-emerald-400">(RSO)</span>' : ""}</td>
+        <td class="px-2 py-2">${escapeHTML(emp.dept || "")}</td>
+        <td class="px-2 py-2">${escapeHTML(emp.role || "")}</td>
+        <td class="px-2 py-2 font-mono">${escapeHTML(emp.tldNumber || "")}</td>
+        <td class="px-2 py-2">${formCount ? statusPill(formCount + " file(s)", "info") : statusPill("No forms", "warn")}</td>
+        <td class="px-2 py-2">${escapeHTML(latestText)}</td>
+        <td class="px-2 py-2">${emp.enabled ? statusPill("Enabled", "ok") : statusPill("Disabled", "neutral")}</td>
+        <td class="px-2 py-2 whitespace-nowrap">
+          <button class="btn-secondary text-[11px] px-2 py-1 mr-1" data-action="edit-employee" data-id="${emp.id}">Edit</button>
+          <button class="btn-secondary text-[11px] px-2 py-1 mr-1" data-action="toggle-employee" data-id="${emp.id}">${emp.enabled ? "Disable" : "Enable"}</button>
+          <button class="btn-secondary text-[11px] px-2 py-1" data-action="select-employee-form" data-id="${emp.id}">Attach Form</button>
+        </td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  function handleEmployeeTableClick(e){
+    const btn = e.target.closest("button"); if(!btn) return;
+    const id = btn.getAttribute("data-id");
+    const action = btn.getAttribute("data-action");
+    let employees = loadJSON(KEY_EMPLOYEES, []);
+    const emp = employees.find(x => x.id === id); if(!emp) return;
+    if(action === "edit-employee"){
+      document.getElementById("employeeId").value = emp.id;
+      document.getElementById("empName").value = emp.name || "";
+      document.getElementById("empDept").value = emp.dept || "";
+      document.getElementById("empRole").value = emp.role || "Other";
+      document.getElementById("empTldNumber").value = emp.tldNumber || "";
+      document.getElementById("empUsername").value = emp.username || "";
+      document.getElementById("empPassword").value = emp.password || "";
+      document.getElementById("empEnabled").checked = !!emp.enabled;
+      document.getElementById("empIsRSO").checked = !!emp.isRSO;
+      window.scrollTo({top: 0, behavior: "smooth"});
+    }
+    if(action === "toggle-employee"){
+      emp.enabled = !emp.enabled;
+      saveJSON(KEY_EMPLOYEES, employees);
+      logAudit(emp.enabled ? "Employee enabled" : "Employee disabled", emp.name);
+      renderAdminUI();
+    }
+    if(action === "select-employee-form"){
+      document.getElementById("formAttachmentEmployee").value = emp.id;
+      document.getElementById("formAttachmentNotes").focus();
+    }
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((resolve, reject) => {
+      if(!file) return reject(new Error("No file selected."));
+      if(file.size > MAX_ATTACHMENT_MB * 1024 * 1024) return reject(new Error(`File is too large. Keep attachments below ${MAX_ATTACHMENT_MB} MB for browser LocalStorage.`));
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = () => reject(new Error("Could not read file."));
+      reader.readAsDataURL(file);
+    });
+  }
+  function saveAttachmentRecord(att){
+    const attachments = loadJSON(KEY_ATTACHMENTS, []);
+    attachments.push(att);
+    saveJSON(KEY_ATTACHMENTS, attachments);
+    logAudit("Attachment uploaded", `${att.type === "employeeForm" ? "Employee form" : "Quarter report"}: ${att.fileName} (${att.quarter || "no quarter"})`);
+  }
+  async function uploadEmployeeForm(){
+    clearMsg("formAttachmentMsg");
+    const employeeId = document.getElementById("formAttachmentEmployee").value;
+    const quarter = document.getElementById("formAttachmentQuarter").value || getCurrentQuarterLabel();
+    const formDate = document.getElementById("formAttachmentDate").value;
+    const documentStatus = document.getElementById("formAttachmentStatus").value;
+    const notes = document.getElementById("formAttachmentNotes").value.trim();
+    const input = document.getElementById("formAttachmentFile");
+    const file = input.files && input.files[0];
+    if(!employeeId){ setMsg("formAttachmentMsg", "Select an employee.", false); return; }
+    if(!file){ setMsg("formAttachmentMsg", "Select a filled form attachment.", false); return; }
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      saveAttachmentRecord({
+        id: "att_" + Date.now(), type: "employeeForm", employeeId, quarter,
+        periodLabel: quarter, formDate, documentStatus, notes,
+        fileName: file.name, fileType: file.type || "application/octet-stream", size: file.size,
+        dataUrl, publishToEmployees: true, uploadedAt: nowISO(), uploadedBy: currentUserLabel()
+      });
+      input.value = ""; document.getElementById("formAttachmentNotes").value = "";
+      setMsg("formAttachmentMsg", "Filled personal monitoring form uploaded.", true);
+      renderAdminUI();
+    } catch(err){ setMsg("formAttachmentMsg", err.message || "Upload failed.", false); }
+  }
+  async function uploadQuarterReport(){
+    clearMsg("quarterAttachmentMsg");
+    const quarter = document.getElementById("quarterAttachmentQuarter").value || getCurrentQuarterLabel();
+    const periodLabel = document.getElementById("quarterAttachmentPeriod").value.trim() || quarter;
+    const publishToEmployees = document.getElementById("quarterAttachmentPublish").checked;
+    const notes = document.getElementById("quarterAttachmentNotes").value.trim();
+    const input = document.getElementById("quarterAttachmentFile");
+    const file = input.files && input.files[0];
+    if(!file){ setMsg("quarterAttachmentMsg", "Select a quarterly report attachment.", false); return; }
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      saveAttachmentRecord({
+        id: "att_" + Date.now(), type: "quarterReport", employeeId: null, quarter,
+        periodLabel, notes, fileName: file.name, fileType: file.type || "application/octet-stream", size: file.size,
+        dataUrl, publishToEmployees, uploadedAt: nowISO(), uploadedBy: currentUserLabel()
+      });
+      input.value = ""; document.getElementById("quarterAttachmentNotes").value = "";
+      setMsg("quarterAttachmentMsg", "Quarterly TLD report uploaded.", true);
+      renderAdminUI();
+    } catch(err){ setMsg("quarterAttachmentMsg", err.message || "Upload failed.", false); }
+  }
+  async function saveImportFileAsQuarterReport(file, quarter, periodLabel){
+    if(!file) return;
+    const dataUrl = await fileToDataUrl(file);
+    saveAttachmentRecord({
+      id: "att_" + Date.now() + "_report", type: "quarterReport", employeeId: null, quarter,
+      periodLabel, notes: "Saved automatically during dose import.", fileName: file.name,
+      fileType: file.type || "application/octet-stream", size: file.size, dataUrl,
+      publishToEmployees: false, uploadedAt: nowISO(), uploadedBy: currentUserLabel()
+    });
+  }
+  function getEmployeeById(id){ return loadJSON(KEY_EMPLOYEES, []).find(e => e.id === id) || null; }
+  function renderEmployeeFormAttachmentTable(){
+    const tbody = document.getElementById("employeeFormAttachmentBody"); if(!tbody) return;
+    const attachments = loadJSON(KEY_ATTACHMENTS, []).filter(a => a.type === "employeeForm").sort((a,b) => String(b.uploadedAt).localeCompare(String(a.uploadedAt))).slice(0, 25);
+    tbody.innerHTML = "";
+    if(!attachments.length){ tbody.innerHTML = emptyRow(6, "No employee form attachments uploaded yet."); return; }
+    attachments.forEach(att => {
+      const emp = getEmployeeById(att.employeeId);
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800 hover:bg-slate-900/40";
+      tr.innerHTML = `
+        <td class="px-2 py-2">${escapeHTML(emp ? emp.name : "Unknown")}</td>
+        <td class="px-2 py-2">${escapeHTML(att.quarter || "")}</td>
+        <td class="px-2 py-2 max-w-[220px] truncate" title="${escapeHTML(att.fileName)}">${escapeHTML(att.fileName)}</td>
+        <td class="px-2 py-2">${statusPill(att.documentStatus || "Uploaded", att.documentStatus === "Correction Required" ? "warn" : "ok")}</td>
+        <td class="px-2 py-2">${escapeHTML(fmtDate(att.uploadedAt))}</td>
+        <td class="px-2 py-2 whitespace-nowrap">${attachmentActions(att.id)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  function renderQuarterReportAttachmentTable(){
+    const tbody = document.getElementById("quarterReportAttachmentBody"); if(!tbody) return;
+    const attachments = loadJSON(KEY_ATTACHMENTS, []).filter(a => a.type === "quarterReport").sort((a,b) => quarterToSortKey(b.quarter) - quarterToSortKey(a.quarter) || String(b.uploadedAt).localeCompare(String(a.uploadedAt)));
+    tbody.innerHTML = "";
+    if(!attachments.length){ tbody.innerHTML = emptyRow(6, "No quarterly TLD report attachments uploaded yet."); return; }
+    attachments.forEach(att => {
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800 hover:bg-slate-900/40";
+      tr.innerHTML = `
+        <td class="px-2 py-2">${escapeHTML(att.quarter || "")}</td>
+        <td class="px-2 py-2">${escapeHTML(att.periodLabel || "")}</td>
+        <td class="px-2 py-2 max-w-[260px] truncate" title="${escapeHTML(att.fileName)}">${escapeHTML(att.fileName)}</td>
+        <td class="px-2 py-2">${att.publishToEmployees ? statusPill("Yes", "ok") : statusPill("No", "neutral")}</td>
+        <td class="px-2 py-2">${escapeHTML(fmtDate(att.uploadedAt))}</td>
+        <td class="px-2 py-2 whitespace-nowrap">${attachmentActions(att.id)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+  function attachmentActions(id){
+    return `
+      <button class="btn-secondary text-[11px] px-2 py-1 mr-1" data-action="open-attachment" data-id="${id}">Open</button>
+      <button class="btn-secondary text-[11px] px-2 py-1 mr-1" data-action="download-attachment" data-id="${id}">Download</button>
+      <button class="btn-danger text-[11px] px-2 py-1" data-action="delete-attachment" data-id="${id}">Delete</button>`;
+  }
+  function getAttachment(id){ return loadJSON(KEY_ATTACHMENTS, []).find(a => a.id === id) || null; }
+  function downloadAttachment(att){
+    const a = document.createElement("a");
+    a.href = att.dataUrl; a.download = att.fileName || "attachment";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  }
+  function handleAttachmentAction(e){
+    const btn = e.target.closest("button[data-action]"); if(!btn) return;
+    const action = btn.getAttribute("data-action");
+    const id = btn.getAttribute("data-id");
+    if(!["open-attachment", "download-attachment", "delete-attachment"].includes(action)) return;
+    const att = getAttachment(id); if(!att) return;
+    if(action === "open-attachment"){
+      const w = window.open(att.dataUrl, "_blank");
+      if(!w) downloadAttachment(att);
+    }
+    if(action === "download-attachment") downloadAttachment(att);
+    if(action === "delete-attachment"){
+      if(!confirm(`Delete attachment "${att.fileName}"?`)) return;
+      const list = loadJSON(KEY_ATTACHMENTS, []).filter(a => a.id !== id);
+      saveJSON(KEY_ATTACHMENTS, list);
+      logAudit("Attachment deleted", `${att.fileName} (${att.quarter || "no quarter"})`);
+      renderAdminUI();
+      const user = getCurrentUser(); if(user && !user.isRSO) renderEmployeeUI(user);
+    }
+  }
+
+  function readAsText(file){ return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = e => resolve(e.target.result); r.onerror = reject; r.readAsText(file); }); }
+  function readAsArrayBuffer(file){ return new Promise((resolve, reject) => { const r = new FileReader(); r.onload = e => resolve(e.target.result); r.onerror = reject; r.readAsArrayBuffer(file); }); }
+  function parseCSV(text){
+    return String(text).split(/\r?\n/).filter(l => l.trim() !== "").map(line => {
+      const out = []; let cur = ""; let inQuotes = false;
+      for(let i=0; i<line.length; i++){
+        const ch = line[i];
+        if(ch === '"' && line[i+1] === '"'){ cur += '"'; i++; continue; }
+        if(ch === '"'){ inQuotes = !inQuotes; continue; }
+        if(ch === ',' && !inQuotes){ out.push(cur); cur = ""; continue; }
+        cur += ch;
+      }
+      out.push(cur); return out;
+    });
+  }
+  async function parsePDF(buf){
+    if(!window['pdfjsLib']) throw new Error("PDF parser library is not available.");
+    const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+    let all = "";
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      all += content.items.map(i => i.str).join(" ") + "\n";
+    }
+    return all.split(/\r?\n/).filter(l => l.trim() !== "").map(line => line.trim().split(/\s+/));
+  }
+  function parseExcel(buf){
+    const data = new Uint8Array(buf);
+    const wb = XLSX.read(data, {type:"array"});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(sheet, {header:1});
+  }
+  function normalizeTld(v){ return String(v ?? "").trim(); }
+  function rowsToDoseRecords(rows, periodLabel, quarterLabel){
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    let doses = loadJSON(KEY_DOSES, []);
+    const preview = document.getElementById("tldPreviewBody");
+    preview.innerHTML = "";
+    let imported = 0, updated = 0, noMatch = 0;
+    if(rows.length && /[A-Za-z]/.test(String(rows[0][0] || "")) && !employees.some(e => normalizeTld(e.tldNumber) === normalizeTld(rows[0][0]))) rows = rows.slice(1);
+    rows.forEach((cols, idx) => {
+      const cells = (cols || []).map(c => String(c ?? "").trim()).filter(c => c !== "");
+      if(cells.length < 3) return;
+      const tldNumber = normalizeTld(cells[0]);
+      const numericIdx = [];
+      cells.forEach((c, i) => { if(!isNaN(parseFloat(String(c).replace(/,/g, "")))) numericIdx.push(i); });
+      if(numericIdx.length < 2) return;
+      const idxHp007 = numericIdx[numericIdx.length - 1];
+      const idxHp10 = numericIdx[numericIdx.length - 2];
+      const hp10 = parseFloat(String(cells[idxHp10]).replace(/,/g, ""));
+      const hp007 = parseFloat(String(cells[idxHp007]).replace(/,/g, ""));
+      const namePart = cells.slice(1, Math.min(idxHp10, idxHp007)).join(" ");
+      const emp = employees.find(e => normalizeTld(e.tldNumber) === tldNumber);
+      const status = emp ? "Mapped" : "No matching TLD";
+      if(emp){
+        const existing = doses.find(d => d.employeeId === emp.id && normalizeTld(d.tldNumber) === tldNumber && d.period === periodLabel && getDoseQuarter(d) === quarterLabel);
+        if(existing){
+          Object.assign(existing, {hp10: isNaN(hp10) ? 0 : hp10, hp007: isNaN(hp007) ? 0 : hp007, quarter: quarterLabel, reportLabel: periodLabel, updatedAt: nowISO()});
+          updated++;
+        } else {
+          doses.push({
+            id: "dose_" + Date.now() + "_" + idx, employeeId: emp.id, tldNumber,
+            period: periodLabel, quarter: quarterLabel, hp10: isNaN(hp10) ? 0 : hp10,
+            hp007: isNaN(hp007) ? 0 : hp007, remarks: "", reportLabel: periodLabel, createdAt: nowISO()
+          });
+          imported++;
+        }
+      } else { noMatch++; }
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800";
+      tr.innerHTML = `
+        <td class="px-2 py-2 font-mono">${escapeHTML(tldNumber)}</td>
+        <td class="px-2 py-2">${escapeHTML(emp ? emp.name : namePart)}</td>
+        <td class="px-2 py-2">${escapeHTML(periodLabel)}</td>
+        <td class="px-2 py-2">${escapeHTML(quarterLabel)}</td>
+        <td class="px-2 py-2">${isNaN(hp10) ? "-" : hp10.toFixed(2)}</td>
+        <td class="px-2 py-2">${isNaN(hp007) ? "-" : hp007.toFixed(2)}</td>
+        <td class="px-2 py-2">${emp ? statusPill(status, "ok") : statusPill(status, "warn")}</td>`;
+      preview.appendChild(tr);
+    });
+    saveJSON(KEY_DOSES, doses);
+    logAudit("Dose report imported", `${periodLabel} / ${quarterLabel}: ${imported} new, ${updated} updated, ${noMatch} unmatched`);
+    return {imported, updated, noMatch};
+  }
+  async function handleTldFileParse(){
+    clearMsg("tldImportMsg");
+    const period = document.getElementById("reportPeriod").value.trim() || document.getElementById("reportQuarter").value || "Not specified";
+    const quarter = document.getElementById("reportQuarter").value || getCurrentQuarterLabel();
+    const input = document.getElementById("tldFileInput");
+    if(!input.files || !input.files[0]){ setMsg("tldImportMsg", "Please select a file.", false); return; }
+    const file = input.files[0];
+    const ext = (file.name.split(".").pop() || "").toLowerCase();
+    try {
+      let rows = [];
+      if(ext === "csv") rows = parseCSV(await readAsText(file));
+      else if(ext === "xls" || ext === "xlsx") rows = parseExcel(await readAsArrayBuffer(file));
+      else if(ext === "pdf") rows = await parsePDF(await readAsArrayBuffer(file));
+      else { setMsg("tldImportMsg", "Unsupported file type. Use CSV, Excel or text-based PDF.", false); return; }
+      const result = rowsToDoseRecords(rows, period, quarter);
+      if(document.getElementById("saveImportAsQuarterReport").checked){
+        await saveImportFileAsQuarterReport(file, quarter, period);
+      }
+      setMsg("tldImportMsg", `Import finished. ${result.imported} new, ${result.updated} updated, ${result.noMatch} unmatched.`, true);
+      renderAdminUI();
+    } catch(err){ setMsg("tldImportMsg", err.message || "Import failed.", false); }
+  }
+
+  function populatePeriodSelect(){
+    const doses = loadJSON(KEY_DOSES, []);
+    const sel = document.getElementById("periodSelect"); if(!sel) return;
+    const selected = sel.value;
+    const periods = [...new Set(doses.map(d => `${d.reportLabel || d.period || "Not specified"} | ${getDoseQuarter(d)}`))];
+    sel.innerHTML = "";
+    if(!periods.length){ const opt = document.createElement("option"); opt.value = ""; opt.textContent = "No periods available"; sel.appendChild(opt); renderPeriodReport(); return; }
+    periods.sort().forEach(p => { const opt = document.createElement("option"); opt.value = p; opt.textContent = p; sel.appendChild(opt); });
+    if(periods.includes(selected)) sel.value = selected;
+    renderPeriodReport();
+  }
+  function renderPeriodReport(){
+    const doses = loadJSON(KEY_DOSES, []);
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    const attachments = loadJSON(KEY_ATTACHMENTS, []);
+    const sel = document.getElementById("periodSelect"); if(!sel) return;
+    const tbody = document.getElementById("periodReportBody"); tbody.innerHTML = "";
+    if(!sel.value){
+      document.getElementById("periodBadgeCount").textContent = "0";
+      document.getElementById("periodTotalHp10").textContent = "0.00";
+      document.getElementById("periodAvgHp10").textContent = "0.00";
+      document.getElementById("periodAttachmentCount").textContent = "0";
+      tbody.innerHTML = emptyRow(5, "No period selected."); return;
+    }
+    const [periodRaw, quarterRaw] = sel.value.split("|").map(x => x.trim());
+    const filtered = doses.filter(d => (d.reportLabel || d.period || "Not specified") === periodRaw && getDoseQuarter(d) === quarterRaw);
+    let totalHp10 = 0;
+    if(!filtered.length) tbody.innerHTML = emptyRow(5, "No dose records for this period.");
+    filtered.forEach(d => {
+      totalHp10 += parseFloat(d.hp10 || 0);
+      const emp = employees.find(e => e.id === d.employeeId);
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800";
+      tr.innerHTML = `
+        <td class="px-2 py-2">${escapeHTML(emp ? emp.name : "Unknown")}</td>
+        <td class="px-2 py-2 font-mono">${escapeHTML(d.tldNumber || "")}</td>
+        <td class="px-2 py-2">${parseFloat(d.hp10 || 0).toFixed(2)}</td>
+        <td class="px-2 py-2">${parseFloat(d.hp007 || 0).toFixed(2)}</td>
+        <td class="px-2 py-2">${escapeHTML(d.remarks || "")}</td>`;
+      tbody.appendChild(tr);
+    });
+    const count = filtered.length;
+    document.getElementById("periodBadgeCount").textContent = count;
+    document.getElementById("periodTotalHp10").textContent = totalHp10.toFixed(2);
+    document.getElementById("periodAvgHp10").textContent = count ? (totalHp10/count).toFixed(2) : "0.00";
+    document.getElementById("periodAttachmentCount").textContent = attachments.filter(a => a.type === "quarterReport" && a.quarter === quarterRaw).length;
+  }
+
+  let doseTrendChart = null;
+  function populateAnalyticsYearSelect(){
+    const sel = document.getElementById("analyticsYearSelect"); if(!sel) return;
+    const selected = sel.value || String(new Date().getFullYear());
+    const years = [...new Set([new Date().getFullYear(), ...loadJSON(KEY_DOSES, []).map(doseYear)])].sort((a,b) => b-a);
+    sel.innerHTML = "";
+    years.forEach(y => { const opt = document.createElement("option"); opt.value = String(y); opt.textContent = String(y); sel.appendChild(opt); });
+    if([...sel.options].some(o => o.value === selected)) sel.value = selected;
+  }
+  function refreshAnalytics(){
+    const doses = loadJSON(KEY_DOSES, []);
+    const attachments = loadJSON(KEY_ATTACHMENTS, []);
+    const empId = document.getElementById("analyticsEmployeeSelect").value;
+    const year = Number(document.getElementById("analyticsYearSelect").value || new Date().getFullYear());
+    const annualLimit = parseFloat(document.getElementById("annualLimit").value || "20");
+    const empDoses = doses.filter(d => d.employeeId === empId && doseYear(d) === year).sort((a,b) => quarterToSortKey(getDoseQuarter(a)) - quarterToSortKey(getDoseQuarter(b)));
+    const cumHp10 = empDoses.reduce((s,d) => s + parseFloat(d.hp10 || 0), 0);
+    const formCount = attachments.filter(a => a.type === "employeeForm" && a.employeeId === empId && getYearFromQuarter(a.quarter) === year).length;
+    document.getElementById("analyticsCumHp10").textContent = cumHp10.toFixed(2);
+    document.getElementById("analyticsBadgeCount").textContent = empDoses.length;
+    document.getElementById("analyticsFormCount").textContent = formCount;
+    let status = "OK", color = "text-emerald-400";
+    if(cumHp10 >= annualLimit){ status = "Above Limit"; color = "text-red-400"; }
+    else if(cumHp10 >= 0.8 * annualLimit){ status = "High (80%+)"; color = "text-amber-400"; }
+    const el = document.getElementById("analyticsStatus"); el.textContent = status; el.className = "text-xl font-bold " + color;
+    const labels = empDoses.map(d => getDoseQuarter(d));
+    const dataHp10 = empDoses.map(d => parseFloat(d.hp10 || 0));
+    const ctx = document.getElementById("doseTrendChart").getContext("2d");
+    if(doseTrendChart) doseTrendChart.destroy();
+    doseTrendChart = new Chart(ctx, {
+      type: "line",
+      data: { labels, datasets: [{label: "Hp(10) mSv", data: dataHp10, fill: false, tension: 0.25}] },
+      options: {
+        responsive: true,
+        plugins: { legend: { labels: { color: "#cbd5e1", font: { size: 10 } } } },
+        scales: { x: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,.12)" } }, y: { ticks: { color: "#94a3b8" }, grid: { color: "rgba(148,163,184,.12)" } } }
+      }
+    });
+  }
+  function renderAlertsTable(){
+    const tbody = document.getElementById("alertTableBody"); if(!tbody) return;
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    const doses = loadJSON(KEY_DOSES, []);
+    const annualLimit = parseFloat(document.getElementById("annualLimit")?.value || "20");
+    const quarterlyInvestigationLevel = annualLimit / 4 * 0.5;
+    tbody.innerHTML = "";
+    const rows = doses.filter(d => parseFloat(d.hp10 || 0) >= quarterlyInvestigationLevel);
+    if(!rows.length){ tbody.innerHTML = emptyRow(6, "No high-dose cases based on the current threshold."); return; }
+    rows.sort((a,b) => parseFloat(b.hp10 || 0) - parseFloat(a.hp10 || 0)).forEach(d => {
+      const emp = employees.find(e => e.id === d.employeeId);
+      const hp10 = parseFloat(d.hp10 || 0);
+      const critical = hp10 >= annualLimit / 4;
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800";
+      tr.innerHTML = `
+        <td class="px-2 py-2">${escapeHTML(emp ? emp.name : "Unknown")}</td>
+        <td class="px-2 py-2">${escapeHTML(d.period || "")}</td>
+        <td class="px-2 py-2">${escapeHTML(getDoseQuarter(d))}</td>
+        <td class="px-2 py-2">${hp10.toFixed(2)}</td>
+        <td class="px-2 py-2">${critical ? statusPill("Critical", "danger") : statusPill("Investigate", "warn")}</td>
+        <td class="px-2 py-2"><input type="text" class="input-field py-1" placeholder="Investigation note"></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderComplianceMatrix(){
+    const tbody = document.getElementById("complianceBody"); if(!tbody) return;
+    const q = document.getElementById("complianceQuarter")?.value || getCurrentQuarterLabel();
+    const employees = activeEmployees();
+    const doses = loadJSON(KEY_DOSES, []);
+    const attachments = loadJSON(KEY_ATTACHMENTS, []);
+    tbody.innerHTML = "";
+    let complete = 0, needs = 0;
+    if(!employees.length){ tbody.innerHTML = emptyRow(6, "No active non-RSO employees."); }
+    employees.forEach(emp => {
+      const hasDose = doses.some(d => d.employeeId === emp.id && getDoseQuarter(d) === q);
+      const hasForm = attachments.some(a => a.type === "employeeForm" && a.employeeId === emp.id && a.quarter === q);
+      const acked = isDoseAcked(emp.id, q);
+      const ok = hasDose && hasForm && acked;
+      if(ok) complete++; else needs++;
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800 hover:bg-slate-900/40";
+      tr.innerHTML = `
+        <td class="px-2 py-2">${escapeHTML(emp.name)}</td>
+        <td class="px-2 py-2 font-mono">${escapeHTML(emp.tldNumber || "")}</td>
+        <td class="px-2 py-2">${hasDose ? statusPill("Available", "ok") : statusPill("Missing", "warn")}</td>
+        <td class="px-2 py-2">${hasForm ? statusPill("Attached", "ok") : statusPill("Missing", "warn")}</td>
+        <td class="px-2 py-2">${acked ? statusPill("Acknowledged", "ok") : statusPill("Pending", hasDose ? "warn" : "neutral")}</td>
+        <td class="px-2 py-2">${ok ? statusPill("Complete", "ok") : statusPill("Needs Action", "warn")}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById("complianceCompleteCount").textContent = complete;
+    document.getElementById("complianceNeedsActionCount").textContent = needs;
+  }
+
+  function renderDocumentVault(){
+    const tbody = document.getElementById("documentVaultBody"); if(!tbody) return;
+    const type = document.getElementById("docFilterType")?.value || "all";
+    const quarter = document.getElementById("docFilterQuarter")?.value || "all";
+    const employeeId = document.getElementById("docFilterEmployee")?.value || "all";
+    const search = (document.getElementById("docSearch")?.value || "").trim().toLowerCase();
+    let list = loadJSON(KEY_ATTACHMENTS, []);
+    if(type !== "all") list = list.filter(a => a.type === type);
+    if(quarter !== "all") list = list.filter(a => a.quarter === quarter);
+    if(employeeId !== "all") list = list.filter(a => a.employeeId === employeeId);
+    if(search) list = list.filter(a => `${a.fileName} ${a.notes} ${a.periodLabel} ${a.documentStatus}`.toLowerCase().includes(search));
+    list.sort((a,b) => String(b.uploadedAt).localeCompare(String(a.uploadedAt)));
+    tbody.innerHTML = "";
+    if(!list.length){ tbody.innerHTML = emptyRow(8, "No documents match the selected filters."); return; }
+    list.forEach(att => {
+      const emp = att.employeeId ? getEmployeeById(att.employeeId) : null;
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800 hover:bg-slate-900/40";
+      tr.innerHTML = `
+        <td class="px-2 py-2">${att.type === "employeeForm" ? statusPill("Employee Form", "info") : statusPill("Quarter Report", "ok")}</td>
+        <td class="px-2 py-2">${escapeHTML(emp ? emp.name : "-")}</td>
+        <td class="px-2 py-2">${escapeHTML(att.quarter || "")}</td>
+        <td class="px-2 py-2 max-w-[240px] truncate" title="${escapeHTML(att.fileName)}">${escapeHTML(att.fileName)}</td>
+        <td class="px-2 py-2 max-w-[260px] truncate" title="${escapeHTML(att.notes || "")}">${escapeHTML(att.notes || att.documentStatus || "")}</td>
+        <td class="px-2 py-2">${escapeHTML(fmtSize(att.size))}</td>
+        <td class="px-2 py-2">${escapeHTML(fmtDate(att.uploadedAt))}</td>
+        <td class="px-2 py-2 whitespace-nowrap">${attachmentActions(att.id)}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function loadSettingsIntoUI(){
+    const s = loadJSON(KEY_SETTINGS, {deptName:"", rsoNotes:""});
+    const dept = document.getElementById("settingDeptName");
+    if(dept) dept.value = s.deptName || "";
+    const notes = document.getElementById("settingRsoNotes");
+    if(notes) notes.value = s.rsoNotes || "";
+  }
+  function saveSettings(){
+    const deptName = document.getElementById("settingDeptName").value.trim();
+    const rsoNotes = document.getElementById("settingRsoNotes").value.trim();
+    saveJSON(KEY_SETTINGS, {deptName, rsoNotes});
+    logAudit("Settings saved", deptName || "No department name");
+    setMsg("settingsMsg", "Settings saved.", true);
+    setTimeout(() => clearMsg("settingsMsg"), 2000);
+  }
+  function exportData(){
+    const data = {
+      version: "2.0-attachments",
+      exportedAt: nowISO(),
+      employees: loadJSON(KEY_EMPLOYEES, []),
+      doses: loadJSON(KEY_DOSES, []),
+      settings: loadJSON(KEY_SETTINGS, {}),
+      acknowledgements: loadJSON(KEY_ACK, {}),
+      attachments: loadJSON(KEY_ATTACHMENTS, []),
+      auditLog: loadJSON(KEY_AUDIT, [])
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `tld_monitoring_backup_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    logAudit("Backup exported", `${data.attachments.length} attachments included`);
+    renderAuditLog();
+  }
+  async function importDataFromFile(e){
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+    try {
+      const text = await readAsText(file);
+      const data = JSON.parse(text);
+      if(!data || !Array.isArray(data.employees) || !Array.isArray(data.doses)) throw new Error("Backup file is not valid.");
+      if(!confirm("Restore this backup? Current local data will be replaced.")) return;
+      saveJSON(KEY_EMPLOYEES, data.employees || []);
+      saveJSON(KEY_DOSES, data.doses || []);
+      saveJSON(KEY_SETTINGS, data.settings || {});
+      saveJSON(KEY_ACK, data.acknowledgements || {});
+      saveJSON(KEY_ATTACHMENTS, data.attachments || []);
+      saveJSON(KEY_AUDIT, data.auditLog || []);
+      logAudit("Backup restored", file.name);
+      setMsg("importDataMsg", "Backup restored successfully.", true);
+      renderAdminUI();
+    } catch(err){ setMsg("importDataMsg", err.message || "Restore failed.", false); }
+    e.target.value = "";
+  }
+  function renderAuditLog(){
+    const tbody = document.getElementById("auditLogBody"); if(!tbody) return;
+    const logs = loadJSON(KEY_AUDIT, []);
+    tbody.innerHTML = "";
+    if(!logs.length){ tbody.innerHTML = emptyRow(4, "No audit entries yet."); return; }
+    logs.slice(0, 100).forEach(log => {
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800";
+      tr.innerHTML = `<td class="px-2 py-2">${escapeHTML(fmtDate(log.at))}</td><td class="px-2 py-2">${escapeHTML(log.user || "")}</td><td class="px-2 py-2">${escapeHTML(log.action || "")}</td><td class="px-2 py-2">${escapeHTML(log.details || "")}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderEmployeeUI(user){
+    const employees = loadJSON(KEY_EMPLOYEES, []);
+    const doses = loadJSON(KEY_DOSES, []);
+    const attachments = loadJSON(KEY_ATTACHMENTS, []);
+    const emp = employees.find(e => e.id === user.id) || user;
+    const annualLimit = 20;
+    const thisYear = new Date().getFullYear();
+    const empDosesAll = doses.filter(d => d.employeeId === emp.id).sort((a,b) => quarterToSortKey(getDoseQuarter(b)) - quarterToSortKey(getDoseQuarter(a)));
+    const empDosesThisYear = empDosesAll.filter(d => doseYear(d) === thisYear);
+    const cumHp10 = empDosesThisYear.reduce((s,d) => s + parseFloat(d.hp10 || 0), 0);
+
+    document.getElementById("empViewName").textContent = emp.name;
+    document.getElementById("empViewDept").textContent = emp.dept || "";
+    document.getElementById("empViewTld").textContent = emp.tldNumber || "Not assigned";
+    document.getElementById("empViewCumHp10").textContent = cumHp10.toFixed(2);
+    let status = "Within monitoring range", color = "text-emerald-400";
+    if(cumHp10 >= annualLimit){ status = "Above recommended annual limit – Contact RSO immediately."; color = "text-red-400"; }
+    else if(cumHp10 >= 0.8 * annualLimit){ status = "High exposure – strictly follow RSO guidance."; color = "text-amber-400"; }
+    const statusEl = document.getElementById("empViewStatus"); statusEl.textContent = status; statusEl.className = "text-xs mt-1 " + color;
+
+    const latest = latestDoseForEmployee(emp.id);
+    const ack = document.getElementById("empAcknowledged");
+    const ackText = document.getElementById("empAckText");
+    if(latest){
+      const q = getDoseQuarter(latest);
+      ack.disabled = false;
+      ack.checked = isDoseAcked(emp.id, q);
+      ackText.textContent = `I have reviewed my latest TLD dose (${q})`;
+    } else {
+      ack.disabled = true; ack.checked = false; ackText.textContent = "No dose record available to acknowledge";
+    }
+
+    const tbody = document.getElementById("empDoseTableBody"); tbody.innerHTML = "";
+    if(!empDosesAll.length){ tbody.innerHTML = emptyRow(6, "No dose history available yet."); }
+    empDosesAll.forEach(d => {
+      const tr = document.createElement("tr"); tr.className = "border-b border-slate-800";
+      const hp10 = parseFloat(d.hp10 || 0);
+      const rowStatus = hp10 >= annualLimit/4 ? statusPill("Investigate", "warn") : statusPill("OK", "ok");
+      tr.innerHTML = `
+        <td class="px-2 py-2">${escapeHTML(d.period || "")}</td>
+        <td class="px-2 py-2">${escapeHTML(getDoseQuarter(d))}</td>
+        <td class="px-2 py-2">${hp10.toFixed(2)}</td>
+        <td class="px-2 py-2">${parseFloat(d.hp007 || 0).toFixed(2)}</td>
+        <td class="px-2 py-2">${escapeHTML(d.remarks || "")}</td>
+        <td class="px-2 py-2">${rowStatus}</td>`;
+      tbody.appendChild(tr);
+    });
+
+    const forms = attachments.filter(a => a.type === "employeeForm" && a.employeeId === emp.id).sort((a,b) => quarterToSortKey(b.quarter) - quarterToSortKey(a.quarter));
+    const formBox = document.getElementById("empFormsList"); formBox.innerHTML = "";
+    if(!forms.length){ formBox.innerHTML = `<div class="soft-card rounded-2xl p-3 text-slate-400">No personal monitoring form attachments are available.</div>`; }
+    forms.forEach(att => {
+      const div = document.createElement("div"); div.className = "soft-card rounded-2xl p-3";
+      div.innerHTML = `
+        <div class="flex items-start justify-between gap-2">
+          <div><div class="font-semibold">${escapeHTML(att.quarter || "")}</div><div class="text-slate-400 truncate max-w-[220px]" title="${escapeHTML(att.fileName)}">${escapeHTML(att.fileName)}</div></div>
+          ${statusPill(att.documentStatus || "Uploaded", att.documentStatus === "Correction Required" ? "warn" : "ok")}
+        </div>
+        <div class="text-slate-500 mt-1">Uploaded ${escapeHTML(fmtDate(att.uploadedAt))}</div>
+        ${att.notes ? `<div class="text-slate-400 mt-1">${escapeHTML(att.notes)}</div>` : ""}
+        <div class="mt-2 no-print">${attachmentActions(att.id).replace(/Delete<\/button>/g, "Delete</button>")}</div>`;
+      const deleteBtn = div.querySelector('[data-action="delete-attachment"]'); if(deleteBtn) deleteBtn.remove();
+      formBox.appendChild(div);
+    });
+
+    const employeeQuarters = new Set(empDosesAll.map(getDoseQuarter));
+    const reports = attachments.filter(a => a.type === "quarterReport" && a.publishToEmployees && employeeQuarters.has(a.quarter)).sort((a,b) => quarterToSortKey(b.quarter) - quarterToSortKey(a.quarter));
+    const reportBox = document.getElementById("empQuarterReportsList"); reportBox.innerHTML = "";
+    if(!reports.length){ reportBox.innerHTML = `<div class="soft-card rounded-2xl p-3 text-slate-400 md:col-span-2 lg:col-span-3">No published quarterly report attachments for your dose quarters.</div>`; }
+    reports.forEach(att => {
+      const div = document.createElement("div"); div.className = "soft-card rounded-2xl p-3";
+      div.innerHTML = `
+        <div class="font-semibold text-emerald-200">${escapeHTML(att.quarter || "")}</div>
+        <div class="text-slate-400 truncate" title="${escapeHTML(att.fileName)}">${escapeHTML(att.fileName)}</div>
+        <div class="text-slate-500 mt-1">${escapeHTML(att.periodLabel || "")}</div>
+        <div class="mt-2 no-print">${attachmentActions(att.id)}</div>`;
+      const deleteBtn = div.querySelector('[data-action="delete-attachment"]'); if(deleteBtn) deleteBtn.remove();
+      reportBox.appendChild(div);
+    });
+  }
+  function handleEmpAcknowledgeChange(){
+    const user = getCurrentUser(); if(!user) return;
+    const latest = latestDoseForEmployee(user.id); if(!latest) return;
+    const q = getDoseQuarter(latest);
+    const ackMap = loadJSON(KEY_ACK, {});
+    const key = makeAckKey(user.id, q);
+    if(document.getElementById("empAcknowledged").checked){
+      ackMap[key] = { checked: true, at: nowISO(), employeeId: user.id, quarter: q, period: latest.period || latest.reportLabel || q };
+      logAudit("Dose acknowledged", `${user.name} acknowledged ${q}`);
+    } else {
+      delete ackMap[key];
+      logAudit("Dose acknowledgement removed", `${user.name} / ${q}`);
+    }
+    saveJSON(KEY_ACK, ackMap);
+  }
+  function handleEmpPrint(){ window.print(); }
+
+  function initAdminTabs(){
+    const tabs = document.querySelectorAll(".admin-tab");
+    tabs.forEach(btn => {
+      btn.addEventListener("click", () => switchAdminTab(btn.getAttribute("data-tab")));
+    });
+    document.querySelectorAll("[data-switch-tab]").forEach(btn => {
+      btn.addEventListener("click", () => switchAdminTab(btn.getAttribute("data-switch-tab")));
+    });
+  }
+  function switchAdminTab(target){
+    document.querySelectorAll(".admin-tab-panel").forEach(p => p.classList.add("hidden"));
+    document.getElementById(target).classList.remove("hidden");
+    document.querySelectorAll(".admin-tab").forEach(b => b.classList.toggle("tab-active", b.getAttribute("data-tab") === target));
+    if(target === "tabAnalytics") refreshAnalytics();
+    if(target === "tabDocuments") { renderComplianceMatrix(); renderDocumentVault(); }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    ensureDemoRSO();
+    refreshQuarterSelects();
+    const current = getCurrentUser();
+    if(current){
+      updateHeaderUserInfo(current);
+      if(current.isRSO){ showView("admin"); renderAdminUI(); }
+      else { showView("employee"); renderEmployeeUI(current); }
+    } else showView("login");
+
+    document.getElementById("loginBtn").addEventListener("click", handleLogin);
+    document.getElementById("loginPassword").addEventListener("keydown", e => { if(e.key === "Enter") handleLogin(); });
+    document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+
+    document.getElementById("saveEmployeeBtn").addEventListener("click", saveEmployee);
+    document.getElementById("resetEmployeeFormBtn").addEventListener("click", resetEmployeeForm);
+    document.getElementById("employeeTableBody").addEventListener("click", handleEmployeeTableClick);
+    document.getElementById("empSearch").addEventListener("input", renderEmployeeTable);
+    document.getElementById("uploadEmployeeFormBtn").addEventListener("click", uploadEmployeeForm);
+    document.getElementById("parseTldFileBtn").addEventListener("click", handleTldFileParse);
+    document.getElementById("uploadQuarterReportBtn").addEventListener("click", uploadQuarterReport);
+    document.getElementById("refreshPeriodBtn").addEventListener("click", renderPeriodReport);
+    document.getElementById("periodSelect").addEventListener("change", renderPeriodReport);
+    document.getElementById("refreshComplianceBtn").addEventListener("click", () => { renderComplianceMatrix(); renderAdminUI(); });
+    document.getElementById("complianceQuarter").addEventListener("change", () => { renderComplianceMatrix(); renderAdminUI(); });
+    ["docFilterType", "docFilterQuarter", "docFilterEmployee"].forEach(id => document.getElementById(id).addEventListener("change", renderDocumentVault));
+    document.getElementById("docSearch").addEventListener("input", renderDocumentVault);
+    document.getElementById("refreshAnalyticsBtn").addEventListener("click", () => { refreshAnalytics(); renderAlertsTable(); renderAdminUI(); });
+    document.getElementById("saveSettingsBtn").addEventListener("click", saveSettings);
+    document.getElementById("exportDataBtn").addEventListener("click", exportData);
+    document.getElementById("importDataInput").addEventListener("change", importDataFromFile);
+    document.getElementById("clearAuditBtn").addEventListener("click", () => { if(confirm("Clear audit log?")){ saveJSON(KEY_AUDIT, []); renderAuditLog(); } });
+    document.getElementById("empAcknowledged").addEventListener("change", handleEmpAcknowledgeChange);
+    document.getElementById("empPrintBtn").addEventListener("click", handleEmpPrint);
+    document.addEventListener("click", handleAttachmentAction);
+    initAdminTabs();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "name": "radpro-tld-monitoring",
+  "version": "3.3.0",
+  "description": "Radpro TLD Personal Monitoring Service Phase 3.3 Enterprise Audit Logging, based on Phase 3.1 stable PostgreSQL runtime.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "check": "node --check server.js",
+    "pg:create-schema": "node scripts/phase2-create-postgres-schema.js",
+    "pg:migrate": "node scripts/phase2-migrate-sqlite-to-postgres.js",
+    "pg:verify": "node scripts/phase2-verify-postgres.js",
+    "start:postgres": "DB_DRIVER=postgres node server.js",
+    "pg:runtime-smoke": "node scripts/phase2b-smoke-test-postgres-runtime.js"
+  },
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.7.4",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-session": "^1.18.0",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "multer": "^2.1.1",
+    "nodemailer": "^6.9.14",
+    "pdfkit": "^0.15.0",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  },
+  "engines": {
+    "node": ">=22.5"
+  }
+}

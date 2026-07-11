@@ -1,0 +1,21 @@
+Radpro TLD Personal Monitoring Service
+Phase 3.3 — Enterprise Audit Logging
+
+Base: Phase 3.1 stable production snapshot.
+
+Included:
+- Extended audit schema: actor, role, organization, hospital, module, event type, entity type/ID, old/new values, metadata, IP, browser, HTTP method/path, response status, success flag and request ID.
+- Automatic audit fallback for all POST, PUT, PATCH and DELETE API actions.
+- Explicit records for successful login, failed login, logout, 2FA verification, training completion, TLD dose e-sign acknowledgement and awareness poster acceptance.
+- Sensitive data redaction for passwords, secrets, tokens and signatures.
+- Audit records are append-only in the application UI; no edit/delete endpoint is provided.
+- Organization/hospital scoped audit visibility for non-Radpro users.
+- Audit search, module filter, actor filter, success/failure filter, date range, pagination and filtered CSV export.
+- Existing Phase 3.1 duplicate prevention and all current modules retained.
+
+Validation:
+- server.js syntax passed.
+- public/app.js syntax passed.
+- Local startup passed.
+- radpro login produced a rich LOGIN audit event.
+- Audit API filters/pagination response verified locally.
